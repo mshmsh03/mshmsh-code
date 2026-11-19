@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# First-pass lead finder for the vibe-code skill's Audit mode.
+# First-pass lead finder for the mshmsh-code skill's Audit mode.
 #
 # Prints places worth reading. A hit is a lead, not a finding: open the file,
 # follow the code path, and only report what you confirm. A clean section does

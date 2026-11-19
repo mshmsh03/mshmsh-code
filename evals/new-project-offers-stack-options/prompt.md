@@ -1,5 +1,5 @@
 ---
-tags: [vibe-code, decisions, build]
+tags: [mshmsh-code, decisions, build]
 max_turns: 12
 timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash]

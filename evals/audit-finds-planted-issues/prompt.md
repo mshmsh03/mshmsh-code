@@ -1,5 +1,5 @@
 ---
-tags: [vibe-code, audit, security]
+tags: [mshmsh-code, audit, security]
 max_turns: 40
 timeout_seconds: 1200
 allowed_tools: [Read, Glob, Grep, Skill, Bash]
