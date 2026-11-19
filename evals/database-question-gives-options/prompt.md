@@ -1,5 +1,5 @@
 ---
-tags: [vibe-code, decisions, stack]
+tags: [mshmsh-code, decisions, stack]
 max_turns: 8
 timeout_seconds: 300
 allowed_tools: [Read, Glob, Grep, Skill, WebSearch, WebFetch]

@@ -1,5 +1,5 @@
 ---
-tags: [vibe-code, build, debugging, tdd]
+tags: [mshmsh-code, build, debugging, tdd]
 max_turns: 25
 timeout_seconds: 900
 allowed_tools: [Read, Glob, Grep, Skill, Write, Edit, Bash]

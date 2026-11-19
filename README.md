@@ -1,4 +1,4 @@
-# vibe-code
+# mshmsh-code
 
 A Claude skill that makes an AI coding agent work like a senior engineer, in any language and for any kind of software: web, backends and APIs, mobile, desktop, CLIs and scripts, data and AI, games, embedded, browser extensions and libraries.
 
@@ -15,17 +15,19 @@ It's tuned for real client work, including Kurdish and Arabic right-to-left, IQD
 **Claude Code (recommended: the full version, with the guard hook)**
 
 ```bash
-npx skills add mshmsh03/vibe-code
+npx skills add mshmsh03/mshmsh-code
 ```
 
 Or by hand: download this repo and put the folder at
 
-- Windows: `C:\Users\<you>\.claude\skills\vibe-code`
-- macOS / Linux: `~/.claude/skills/vibe-code`
+- Windows: `C:\Users\<you>\.claude\skills\mshmsh-code`
+- macOS / Linux: `~/.claude/skills/mshmsh-code`
 
-Restart Claude Code, then type `/vibe-code`, or just describe what you want ("build me an app for my friend's pharmacy", "which database should I use?", "this bug keeps coming back", "is my app safe to launch?").
+Restart Claude Code, then type `/mshmsh-code`, or just describe what you want ("build me an app for my friend's pharmacy", "which database should I use?", "this bug keeps coming back", "is my app safe to launch?").
 
 **Claude app:** zip the folder and upload it in the app's skills settings. Hooks and slash commands only exist in Claude Code.
+
+**Renamed:** this skill was called `vibe-code` until 2026-11-19. If you installed the old one, delete that folder (or remove the old skill in the app) so the two don't both load.
 
 ## What you need
 

@@ -1,9 +1,9 @@
 ---
-name: "vibe-code"
+name: "mshmsh-code"
 description: "Build, fix and audit software in any language the way a senior engineer does, and make every decision that shapes it with the user: real options, honest trade-offs, a recommendation, their pick. Build mode asks about the problem, users, specs and dev setup, recommends a stack, then designs, plans, sets guardrails (git, types, lint, tests, CI), builds test-first in small slices, solves problems at the root cause, verifies with evidence and ships. Covers web, backend/APIs, mobile, desktop, CLIs, data/AI, games and embedded, plus security, data modeling, localization/RTL, money and offline sync. Audit mode is a read-only review before launch or handoff, with a verdict and a ranked report. Use whenever the user wants to plan, build, extend, fix or debug any app, site, API, script or tool, weigh options (\"which stack should I use\", \"what are my options\", \"how should I approach this\"), or check code (\"is it safe\", \"audit my code\", \"ready to launch\"), even if they never say \"vibe coding\"."
 ---
 
-# Vibe Code
+# mshmsh-code
 
 A senior engineer's way of building software with an AI agent, in any language, for any kind of software. It does three jobs:
 - **Decide well, with the user.** Every choice that shapes the software is made on purpose: real options, honest trade-offs, a recommendation, and the user picks. They learn why, so they understand what they own.
