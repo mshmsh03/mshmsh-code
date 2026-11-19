@@ -35,6 +35,8 @@ Restart Claude Code, then type `/vibe-code`, or just describe what you want ("bu
 
 ## How it works
 
+**Short by default.** It leads with the answer, asks about five questions at a time, and keeps reports to the point, with more detail when you ask.
+
 **Decisions.** It sorts every open question first: facts it can look up (it looks them up), facts only you know (it asks, with its best guess), your intent (one open question), and real choices (options). You decide anything that's yours by nature or hard to undo; it decides small, reversible things inside the agreed design and tells you. Options come through Claude's question tool where available (with the recommended one first and a preview of code or schemas), or as lettered options in text. Decisions are logged in `docs/decisions.md`, with an ADR for the big ones.
 
 **Problem-solving.** Clear problems get the standard answer; complicated ones get analysis and options; unknowable ones get a small time-boxed experiment; emergencies get stabilized first. After three failed attempts at one approach it stops and rethinks instead of patching on.
@@ -82,7 +84,7 @@ Restart Claude Code, then type `/vibe-code`, or just describe what you want ("bu
 
 - **The guard hook:** `node scripts/tests/guard.test.mjs` runs 242 checks: destructive commands blocked, risky ones asked about, everyday commands left alone, and malformed input failing closed.
 - **The scanner:** `bash scripts/tests/scan.test.sh` builds a throwaway repo with planted issues in JavaScript, Python, C#, Go, Dart, Docker, GitHub Actions, Electron and Firestore rules, then checks all 30 expected results, including that no planted secret is ever printed in full.
-- **The skill itself:** four cases in `evals/`: a new project that must ask and offer stack options, a bug fixed test-first, a database question answered as options, and an audit that must find seven planted issues without changing a file. Run them from this folder with Claude Code: `claude plugin eval . --allow-tools Write,Edit,Bash --scaffold`.
+- **The skill itself:** four cases in `evals/`: a new project that must ask and offer stack options, a bug fixed test-first, a database question answered as options, and an audit that must find seven planted issues without changing a file. Run them from this folder with Claude Code: `claude plugin eval . --allow-tools Write,Edit,Bash --scaffold`. In the first run the skill passed 23 of 23 checks and the same model without it 20 of 23; the skill's answers were much longer, which led to the short-by-default rules and stricter checks that followed.
 
 ## Licence
 

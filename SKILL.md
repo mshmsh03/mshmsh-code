@@ -30,6 +30,8 @@ Build mode prevents those failures; Audit mode finds them.
 - **AI output is only as good as its feedback loop.** Set up fast automatic signals early (types, linter, tests, a running program you can exercise, git to roll back), work in steps small enough that each signal is unambiguous, and never claim something works without fresh evidence.
 - **The software belongs to the user.** Decisions that shape it are theirs, offered as clear options in plain words, and written down so nobody re-argues them or quietly undoes them.
 
+**Short by default.** Lead with the answer, the verdict or the decision. Ask at most about five questions per round: the ones whose answers change the most. One line per option. Offer depth ("want the details?") instead of including it, and follow the user's own length preferences when they've stated them. Long material (a spec, a full findings list) goes in a file, with a short summary in chat.
+
 ## How a senior engineer thinks
 
 - **Problem before solution.** Who uses it, the one job it must do well, what "done" means, and which qualities matter most here (correctness, security, speed, scale, offline, cost, time to market). Technology comes after.
@@ -71,6 +73,7 @@ Most bad software comes from decisions nobody made on purpose. Before acting on 
 **Asking:**
 - With the question tool (AskUserQuestion): up to 4 independent decisions per call, 2-4 options each, the recommended option first with "(Recommended)" at the end of its label, the cost and trade-off in every description, a `header` of 12 characters or fewer, and a `preview` for anything easier to judge by seeing it (a code sketch, schema, API shape, folder tree, command). Each question must stand alone, because text written next to it may be hidden while it's open.
 - Without the tool: lettered options in text, one line each with its cost, then wait.
+- Keep each round small: the decision that matters most now, plus at most a few independent ones. The rest wait.
 - Big to small for new work (stack, then architecture, data model, details); worst first for fixes. Number long queues ("Decision 2 of 5"). Dependent decisions go one at a time; independent ones share a round.
 - If nobody can answer (a subagent, a scheduled run): decide two-way doors and mark them "decided for you"; for one-way doors, do the independent work and return the decision cards.
 
@@ -263,7 +266,7 @@ For those, review the code like a junior engineer's, or write the sensitive core
   Step up a size if a "small change" turns out to touch auth, sync, the schema or a public API.
 - **Look things up before asking.** The repo, its manifests and lockfiles, docs, data, history and the installed tools are your job.
 - **Intent first.** Until you know why they want it, ask open questions in their words. Listen for "should want" answers ("scalable", "clean architecture", "the standard way") and ask what they would want if they didn't have to justify it.
-- **Then ask in numbered rounds:** every question whose prerequisites are already answered, each with your best guess or recommended default, worded so "yes" accepts it. Questions that depend on unanswered ones wait for the next round.
+- **Then ask in short numbered rounds:** at most about five questions whose answers change the design most and whose prerequisites are already answered, each with your best guess or recommended default, worded so "yes" accepts it. Everything else waits for a later round or goes into the spec as a stated default.
 - **For projects, cover:**
   - **Goal and users:** who uses it, the one job it must do well, what success looks like.
   - **Functional specs:** the main user flows as short stories with acceptance criteria, and what's out of scope.
@@ -272,7 +275,7 @@ For those, review the code like a junior engineer's, or write the sensitive core
   - **The dev setup:** operating system and machine, languages and tools already installed (check versions yourself where you can), editor, hardware limits (iOS builds need a Mac), and the accounts and keys the project will need.
 - **Questions meant for a client:** draft them for the user to forward, in plain words, each tied to a real moment ("the last time a customer returned something"), most important first.
 - **Play it back before building:** outcome, users, success, the binding constraint and what's out of scope, in their words, and get an explicit yes. "Whatever you think" is not a yes: offer two concrete options instead.
-- **Write it down** as a short spec (`docs/specs/YYYY-MM-DD-<topic>-spec.md`). Say every default out loud and label guesses. Push back on weak ideas, with the reason.
+- **Write it down** as a short spec (`docs/specs/YYYY-MM-DD-<topic>-spec.md`). In chat, name only the defaults that change the design; the spec lists the rest, labelled as guesses, where the user can correct them. Push back on weak ideas, with the reason.
 
 Details: `references/build/discovery-and-specs.md`.
 
@@ -451,5 +454,5 @@ Read `references/audit/workflow.md` before step 2: it has each stack's commands,
 4. **Security pass (deep)** with `references/audit/security.md`: secrets and history, auth and ownership (IDOR), access rules, money and business logic, webhooks and payment callbacks, paid APIs and LLMs, injection and unsafe sinks for every language present, sessions/CORS/headers, platform specifics (web, mobile, desktop), dependencies and supply chain, logging and privacy, and containers, CI, infrastructure and other kinds of software.
 5. **Quality passes.** Walk **every line** of `references/audit/quality.md` against the code: correctness, data integrity, performance, UX/accessibility/localization, tests and tooling, production readiness. Most lines take seconds, and skipped lines are where audits miss things. Trace deeply only where the software's purpose makes an area critical, like money and stock in a POS or personal data in a clinic app. Trace at least one critical flow end to end, client to server and back.
 6. **Confirm, merge, prune.** Trace every lead to a real path, merge findings with one root cause, and drop what you can't support. List what you ruled out, one line each.
-7. **Report** (workflow §3-4): the verdict first (**Blocked** / **Risky: internal or pilot only** / **Launchable with caveats** / **Ready**; any Critical means Blocked), a plain-words summary for the owner, the scorecard, the findings table worst-first with file:line, scenario and fix, the Top 3 to fix today, what was checked and fine, and the evidence.
+7. **Report** (workflow §3-4), about 1,000 words for a small codebase: the verdict first in one or two plain sentences (**Blocked** / **Risky: internal or pilot only** / **Launchable with caveats** / **Ready**; any Critical means Blocked), what was audited and what couldn't be checked in a line, the findings table worst-first (one short row per root cause, with file:line, scenario and fix), short details for Critical findings only, the Top 3 to fix today, and a few bullets of checked-and-fine and evidence. More detail on any finding when the user asks, or in a file if they want the full report.
 8. **Offer the fixes as decisions** (workflow §5): the Top 3 first, with options where a finding has more than one reasonable fix. Fixing is Build mode: reproduce with a failing test, fix, re-run the checks, and re-audit the touched paths.

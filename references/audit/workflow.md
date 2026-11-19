@@ -67,28 +67,31 @@ Judge by impact times who can trigger it, then sort worst-first.
 
 ## 4. Report format
 
-- **Verdict first,** in one line: **Blocked** / **Risky: internal or pilot only** / **Launchable with caveats** / **Ready**, plus the findings that decide it. Any Critical means Blocked; the other caps are in `quality.md` §8. Then say what was audited (languages, commit or date, scope) and what couldn't be checked.
-- **In plain words,** for the owner: 3-5 sentences without jargon. What a stranger, a customer or an employee could do today, what it could cost, and roughly how long the top fixes take.
-- **Scorecard:** one row each for Security, Correctness & data, Performance, UX/a11y/localization, Tests & tooling and Production readiness, rated **OK**, **Issues** or **Blocking** with a short reason.
-- **Findings,** worst-first. Keep cells short: no code blocks, and no `||` rule snippets, which break tables.
+Short by default: about 1,000 words for a small codebase, more only when the findings truly need it. The owner should know from the first two sentences whether they can launch, and why.
 
-  | # | Severity | Area | File:line | Problem | Exploit or failure scenario | Fix (one line, effort S/M/L) |
-  |---|---|---|---|---|---|---|
+- **Verdict first,** in one or two plain sentences an owner understands: **Blocked** / **Risky: internal or pilot only** / **Launchable with caveats** / **Ready**, plus the findings that decide it ("Blocked: anyone can fake a payment, set their own prices, or read your database."). Any Critical means Blocked; the other caps are in `quality.md` §8.
+- **Scope in one line:** what was audited (languages, commit or date) and what couldn't be checked.
+- **Findings,** worst-first, one row per root cause. Keep cells short: no code blocks, and no `||` rule snippets, which break tables.
 
-  - Then a numbered **Details** block for each Critical and High row: the full scenario, the exact fix and the code that won't fit in a cell.
+  | # | Severity | File:line | Problem | Exploit or failure scenario | Fix (effort S/M/L) |
+  |---|---|---|---|---|---|
+
   - Be specific: "`STRIPE_SECRET_KEY` hardcoded at `src/lib/stripe.ts:4`", not "exposed API key".
   - Every fix names the actual change; a leaked key's fix starts with "rotate".
-  - Use one row per root cause, and include every confirmed finding, Lows too (group them by area if there are many).
-- **Top 3 to fix today:** the highest-leverage fixes, not always the three worst rows.
-- **Checked and fine:** notable areas verified clean, and worries that turned out to be paper tigers, with the reason.
-- **Evidence:** the commands run and their results, the evidence still missing, and one concrete next action.
+  - Include every confirmed finding, Lows too; group Lows into one row per area when there are many.
+- **Details for Critical findings only:** two to four sentences each (the attack path and the exact fix), plus a short code snippet when it saves explanation. Other findings get details when the user asks.
+- **Top 3 to fix today:** the highest-leverage fixes, not always the three worst rows, each with its rough effort.
+- **Checked and fine:** up to five bullets, including worries that turned out to be paper tigers, with the reason.
+- **Evidence:** up to five bullets: the commands run and their results, what couldn't be checked and where to confirm it, and one concrete next action.
+
+If the user wants the full report (a scorecard per area, details for every finding, the complete evidence), write it to a file outside the repo or as a document, and keep the chat version short.
 
 If the user asked about one area only, keep the same table, the Top 3 and the "couldn't check" line, scoped to that area.
 
 ## 5. After the report
 
-Offer the fixes as decisions (SKILL.md "Decisions"), so the owner chooses what gets fixed and how:
-- The Top 3 first, then the rest worst-first.
+Offer the fixes as decisions (SKILL.md "Decisions"), so the owner chooses what gets fixed and how. Keep it to the few decisions that matter now, usually the Top 3 and any business rule a fix depends on:
+- The Top 3 first; the rest worst-first in a later round.
 - Where a finding has more than one reasonable fix, show the options with their trade-offs. Common pairs: a quick guard now or a redesign; a patch or a data migration; tightening a rule or moving the operation to the server; rotating a key now and moving it behind an endpoint next.
 - Where there's one obvious fix, offer it as fix now or later, with the effort.
 - A leaked live key is the exception: say to rotate it now, before anything else, whatever else they choose.

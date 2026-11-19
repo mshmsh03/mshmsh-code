@@ -133,6 +133,7 @@ Reply with a letter, a mix ("A, but start with SQLite locally"), or "you decide"
 **If you can't ask at all** (a subagent, a batch run), don't make user-owned decisions. Do the parts that don't depend on them, and return the decision cards to whoever called you.
 
 **Keep it human:**
+- Short: lead with the recommendation, one or two lines per option, and the full reasoning only when asked. At most about five questions per round.
 - Plain words, a little above the user's level, never process jargon. Explain any term you must use.
 - Lead with what changes for them (cost, time, what users see), then the technical reason.
 - One decision at a time when they depend on each other; batch them when they don't.

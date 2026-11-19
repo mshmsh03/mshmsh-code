@@ -29,7 +29,7 @@ Read this before building anything bigger than a quick fix. SKILL.md Build §2 h
 - Until you know why they want it, ask open questions in their own terms, one at a time, with no menu of answers: your options would steer them.
 - Listen for "should want" answers: buzzwords as goals ("scalable", "modern", "clean architecture"), deference to convention ("the way most apps do it"), "I think I'm supposed to…". Ask what they would want if they didn't have to justify it to anyone.
 
-**Then the details, in numbered rounds.** Ask every question whose prerequisites are already settled, each with your best guess (for facts) or recommended default (for choices), worded so "yes" accepts it: "3. Offline: the app keeps taking orders without internet and syncs later. Recommended: yes, since the shop's connection drops daily." Questions that depend on unanswered ones wait for the next round. If they'd rather go one question at a time, switch.
+**Then the details, in short numbered rounds.** Ask at most about five questions per round, the ones whose answers change the design most and whose prerequisites are already settled, each with your best guess (for facts) or recommended default (for choices), worded so "yes" accepts it: "3. Offline: the app keeps taking orders without internet and syncs later. Recommended: yes, since the shop's connection drops daily." Questions that depend on unanswered ones, and anything a stated default can cover, wait for a later round. If they'd rather go one question at a time, or want everything at once, switch.
 
 **Ground to cover** (a territory, not a script): what's special about this and why now; goals, non-goals and **anti-goals** (ways it could technically work and still fail); prior art they love or hate; what exists already and what was tried; the assets they have (logo, product list, old database, printer model); and **which decisions they want to make themselves and which they'd hand to you**. That last answer sets the dial in SKILL.md "Decisions".
 
@@ -37,9 +37,9 @@ Read this before building anything bigger than a quick fix. SKILL.md Build §2 h
 
 **Clients get questions in plain words,** drafted for the user to forward: one per message where possible, most important first, no jargon, no menu of answers unless they're stuck. Technical owners can take the detailed rounds.
 
-**Scale it to the work.** A script needs three questions (input, output, where it runs). A product needs all of section 3. Never interview someone for longer than the work will take.
+**Scale it to the work.** A script needs three questions (input, output, where it runs). A product needs all of section 3, spread over a few short rounds. Never interview someone for longer than the work will take.
 
-**Say defaults out loud and label guesses** ("Assuming 1-3 staff users; tell me if it's more"). A default the user never heard is one they couldn't reject. If they say "you decide", propose something concrete and log it as your call, not as agreed.
+**Say defaults out loud and label guesses** ("Assuming 1-3 staff users; tell me if it's more"). A default the user never heard is one they couldn't reject. In chat, name the handful that change the design; the spec lists the rest, where the user can correct them. If they say "you decide", propose something concrete and log it as your call, not as agreed.
 
 **Play it back before building:**
 
