@@ -67,11 +67,11 @@ Judge by impact times who can trigger it, then sort worst-first.
 
 ## 4. Report format
 
-Short by default: about 1,000 words for a small codebase, more only when the findings truly need it. The owner should know from the first two sentences whether they can launch, and why.
+Short by default: about 1,000 words for a small codebase, more only when the findings truly need it. The owner should know from the first two sentences whether they can launch, and why. Draft the report, count its words (`wc -w` on a scratch copy), and if it runs past about 1,200, shorten table cells and details first, then move the rest to a file.
 
 - **Verdict first,** in one or two plain sentences an owner understands: **Blocked** / **Risky: internal or pilot only** / **Launchable with caveats** / **Ready**, plus the findings that decide it ("Blocked: anyone can fake a payment, set their own prices, or read your database."). Any Critical means Blocked; the other caps are in `quality.md` §8.
 - **Scope in one line:** what was audited (languages, commit or date) and what couldn't be checked.
-- **Findings,** worst-first, one row per root cause. Keep cells short: no code blocks, and no `||` rule snippets, which break tables.
+- **Findings,** worst-first, one row per root cause. Keep cells to a short phrase, not sentences: no code blocks, and no `||` rule snippets, which break tables.
 
   | # | Severity | File:line | Problem | Exploit or failure scenario | Fix (effort S/M/L) |
   |---|---|---|---|---|---|
@@ -90,7 +90,7 @@ If the user asked about one area only, keep the same table, the Top 3 and the "c
 
 ## 5. After the report
 
-Offer the fixes as decisions (SKILL.md "Decisions"), so the owner chooses what gets fixed and how. Keep it to the few decisions that matter now, usually the Top 3 and any business rule a fix depends on:
+Offer the fixes as decisions (SKILL.md "Decisions"), so the owner chooses what gets fixed and how. Keep it to the few decisions that matter now (at most three, plus at most three facts only the owner knows), usually the Top 3 and any business rule a fix depends on:
 - The Top 3 first; the rest worst-first in a later round.
 - Where a finding has more than one reasonable fix, show the options with their trade-offs. Common pairs: a quick guard now or a redesign; a patch or a data migration; tightening a rule or moving the operation to the server; rotating a key now and moving it behind an endpoint next.
 - Where there's one obvious fix, offer it as fix now or later, with the effort.
