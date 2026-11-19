@@ -28,7 +28,9 @@ EXCL=("${EXCL_BASE[@]}" --exclude-dir=.idea --exclude-dir=.vscode --exclude-dir=
 SRC=("--include=*.js" "--include=*.jsx" "--include=*.ts" "--include=*.tsx" "--include=*.mjs"
   "--include=*.cjs" "--include=*.vue" "--include=*.svelte" "--include=*.dart" "--include=*.py"
   "--include=*.php" "--include=*.rb" "--include=*.go" "--include=*.java" "--include=*.kt"
-  "--include=*.swift" "--include=*.sql" "--include=*.html")
+  "--include=*.swift" "--include=*.sql" "--include=*.html" "--include=*.cs" "--include=*.cshtml"
+  "--include=*.razor" "--include=*.rs" "--include=*.kts" "--include=*.erb" "--include=*.jinja"
+  "--include=*.j2" "--include=*.twig" "--include=*.scala" "--include=*.ex" "--include=*.exs")
 
 hdr() { printf '\n## %s\n' "$1"; }
 note() { printf '    %s\n' "$1"; }
@@ -38,6 +40,7 @@ any() { for f in "$@"; do [ -e "$f" ] && return 0; done; return 1; }
 mask() {
   sed -E \
     -e 's#(://[^:/@ ]+:)[^@ ]+@#\1***@#g' \
+    -e 's/((Password|Pwd|PASSWORD|password|pwd)=)[^;"'"'"' ]+/\1***/g' \
     -e 's/\b((sk|rk|pk)_(live|test)_|sb_secret_|sbp_|whsec_|github_pat_|gh[pousr]_|xox[abprs]-|gsk_|hf_|xai-|GOCSPX-)[A-Za-z0-9_-]{6,}/\1***/g' \
     -e 's/\bre_[A-Za-z0-9]{6,}_[A-Za-z0-9]{16,}/re_***/g' \
     -e 's/\b([0-9]{8,10}:)AA[A-Za-z0-9_-]{30,}/\1AA***/g' \
@@ -47,6 +50,7 @@ mask() {
     -e 's/\beyJ[A-Za-z0-9_-]{10,}(\.[A-Za-z0-9_-]+)*/eyJ***/g' \
     -e 's/\bSG\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/SG.***/g' \
     -e 's/(([Kk]ey|KEY|[Ss]ecret|SECRET|[Tt]oken|TOKEN|[Pp]assw(or)?d|PASSW(OR)?D|[Pp]wd)[A-Za-z_]*["'"'"']?\]?[[:space:]]*(:|=|==|===|!=|!==)[[:space:]]*["'"'"'])[^"'"'"']{6,}/\1***/g' \
+    -e 's/(([Kk]ey|KEY|[Ss]ecret|SECRET|[Tt]oken|TOKEN|[Pp]assw(or)?d|PASSW(OR)?D|[Pp]wd|PWD)[A-Za-z0-9_]*[[:space:]]*(:|=)[[:space:]]*)[A-Za-z0-9_+/=-]{6,}([[:space:]"'"'"';,]|$)/\1***\6/g' \
     -e 's/(["'"'"'])[A-Za-z0-9_-]{24,}(["'"'"'])/\1***\2/g'
 }
 
@@ -104,13 +108,17 @@ find . \( -name node_modules -o -name .git -o -name build -o -name .dart_tool -o
      -o -name 'vite.config.*' -o -name app.json -o -name 'app.config.*' -o -name eas.json \
      -o -name netlify.toml -o -name vercel.json -o -name _headers -o -name Dockerfile \
      -o -name requirements.txt -o -name pyproject.toml -o -name AndroidManifest.xml \
-     -o -name Info.plist -o -name schema.prisma \) -print 2>/dev/null | sed 's|^\./|    |' | head -n 40
+     -o -name Info.plist -o -name schema.prisma -o -name go.mod -o -name Cargo.toml -o -name pom.xml \
+     -o -name 'build.gradle*' -o -name '*.csproj' -o -name composer.json -o -name Gemfile -o -name manage.py \
+     -o -name tauri.conf.json -o -name '*.tf' -o -name Pulumi.yaml -o -name 'docker-compose*.y*ml' \
+     -o -name Package.swift -o -name CMakeLists.txt -o -name platformio.ini \) -print 2>/dev/null \
+  | sed 's|^\./|    |' | head -n 40
 [ -d .github/workflows ] && note ".github/workflows/ (CI present)"
 lead "Next.js version (read the exact version from the lockfile; compare with the newest security release on nextjs.org/blog: 13.x/14.x get no fixes)" '"next"[[:space:]]*:[[:space:]]*"[^"]+"' "--include=package.json"
 
 # ---------------------------------------------------------------------------
 hdr "Committed files that usually hold secrets"
-SENSITIVE='(^|/)(\.env(\.[^/]*)?|[^/]*\.pem|[^/]*\.key|[^/]*\.p12|[^/]*\.pfx|[^/]*\.jks|[^/]*\.keystore|key\.properties|[^/]*service[-_]?account[^/]*\.json|[^/]*firebase-adminsdk[^/]*\.json|credentials\.json|id_rsa|id_ed25519|\.npmrc|\.pypirc)$'
+SENSITIVE='(^|/)(\.env(\.[^/]*)?|\.envrc|[^/]*\.pem|[^/]*\.key|[^/]*\.p12|[^/]*\.pfx|[^/]*\.jks|[^/]*\.keystore|key\.properties|[^/]*service[-_]?account[^/]*\.json|[^/]*firebase-adminsdk[^/]*\.json|credentials\.json|id_rsa|id_ed25519|\.npmrc|\.pypirc|\.netrc|\.git-credentials|master\.key|terraform\.tfstate(\.backup)?|[^/]*\.tfvars)$'
 if [ "$IS_GIT" = 1 ]; then
   [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = true ] \
     && note "SHALLOW CLONE: history is incomplete, so secrets in older commits can't be seen"
@@ -147,12 +155,13 @@ secret "Slack token" 'xox[abprs]-[A-Za-z0-9-]{10,}'
 secret "SendGrid key" 'SG\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{16,}'
 secret "Private key block" '-----BEGIN ([A-Z]+ )?PRIVATE KEY-----'
 secret "Service-account JSON content" '"type"[[:space:]]*:[[:space:]]*"service_account"'
+secret "Connection string with an inline password" '(Password|Pwd|PASSWORD|password|pwd)=[^;"'"'"' <>{}$]{4,};'
 secret "DB URL with password" '(postgres(ql)?|mysql|mongodb(\+srv)?|redis|amqp)://[^:/ "]+:[^@/ "]+@'
 secret "JWT (legacy Supabase anon/service_role keys are JWTs: decode the payload; role service_role = critical)" 'eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'
 secret "Google API key (Firebase config keys are public by design; Gemini/Maps server keys are not)" 'AIza[0-9A-Za-z_-]{35}'
-secret "Hardcoded credential assignment" '([Aa][Pp][Ii][_-]?[Kk][Ee][Yy]|[Ss][Ee][Cc][Rr][Ee][Tt]|[Pp][Aa][Ss][Ss][Ww]([Oo][Rr])?[Dd]|[Tt][Oo][Kk][Ee][Nn])[A-Za-z0-9_]*["'"'"']?[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"' ]{8,}["'"'"']'
-names "Hardcoded secret compared in code (shared static key instead of real auth)" \
-  'headers\[[^]]*([Kk]ey|[Tt]oken|[Ss]ecret|[Aa]uth)[^]]*\][[:space:]]*[!=]==?[[:space:]]*["'"'"']' "${SRC[@]}"
+secret "Hardcoded credential assignment" '([Aa][Pp][Ii][_-]?[Kk][Ee][Yy]|([Aa][Dd][Mm][Ii][Nn]|[Mm][Aa][Ss][Tt][Ee][Rr]|[Ss][Ii][Gg][Nn][Ii][Nn][Gg])[_-]?[Kk][Ee][Yy]|[Ss][Ee][Cc][Rr][Ee][Tt]|[Pp][Aa][Ss][Ss][Ww]([Oo][Rr])?[Dd]|[Tt][Oo][Kk][Ee][Nn])[A-Za-z0-9_]*["'"'"']?[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"' ]{8,}["'"'"']'
+names "Static key in a header compared in code (a shared secret instead of real auth)" \
+  '(headers\[[^]]*|headers\.get\([^)]*|req\.get\([^)]*|header\([^)]*)([Kk]ey|[Tt]oken|[Ss]ecret|[Aa]uth)[^])]*[])][[:space:]]*[!=]==?' "${SRC[@]}"
 names "Secrets compiled into a mobile binary (--dart-define values are extractable)" \
   'String\.fromEnvironment\(["'"'"'][A-Z_]*(KEY|SECRET|TOKEN|PASSWORD)[A-Z_]*["'"'"']' "--include=*.dart"
 lead "A .env file bundled as a Flutter asset (ships in plain text)" '^[[:space:]]*-[[:space:]]*\.env' "--include=pubspec.yaml"
@@ -216,9 +225,13 @@ fi
 # ---------------------------------------------------------------------------
 hdr "Endpoints to check for auth, ownership and validation"
 lead "HTTP handlers and callable functions" \
-  '(app|router|server)\.(get|post|put|patch|delete|all)\(|export (async )?function (GET|POST|PUT|PATCH|DELETE)\b|\bon(Request|Call)\(|["'"'"']use server["'"'"']|Deno\.serve\(|@app\.(get|post|put|delete|route)\(' "${SRC[@]}"
+  '([A-Za-z_]*[Aa]pp|[A-Za-z_]*[Rr]outer|[Ss]erver|fastify)\.(get|post|put|patch|delete|all)\(|export (async )?function (GET|POST|PUT|PATCH|DELETE)\b|\bon(Request|Call)\(|["'"'"']use server["'"'"']|Deno\.serve\(|@app\.(get|post|put|delete|route)\(' "${SRC[@]}"
+lead "Handlers in other frameworks (Django/DRF, Flask/FastAPI, Rails, Laravel, Spring, ASP.NET, Go, Rust)" \
+  '@api_view|\((APIView|ViewSet|ModelViewSet|GenericAPIView)\)|@(app|router|bp|blueprint)\.(route|get|post|put|patch|delete)\(|Route::(get|post|put|patch|delete|any|resource)\(|@(Get|Post|Put|Patch|Delete|Request)Mapping|\[Http(Get|Post|Put|Patch|Delete)|\.Map(Get|Post|Put|Patch|Delete)\(|http\.HandleFunc\(|\.(GET|POST|PUT|PATCH|DELETE)\("/|\.route\("/' "${SRC[@]}"
+lead "Auth or CSRF protection switched off (confirm each one is intended)" \
+  'AllowAny|permitAll\(\)|\[AllowAnonymous\]|skip_before_action[[:space:]]+:authenticate|csrf_exempt|skip_forgery_protection|csrf\(\)\.disable|csrf\([^)]*disable|IgnoreAntiforgeryToken|withoutMiddleware\(' "${SRC[@]}" "--include=*.py"
 lead "Lookups by client-supplied ID (confirm an ownership check)" \
-  'doc\([[:space:]]*req\.params|findUnique\(\{[^}]*params|where\([^)]*req\.params|\.eq\(["'"'"']id["'"'"'],[[:space:]]*(req\.)?(params|query)|findById\([[:space:]]*req\.' "${SRC[@]}"
+  'doc\([[:space:]]*req\.params|\.(query|execute)\([^;]*req\.(params|query|body)\.[A-Za-z_]*[iI]d\b|findUnique\(\{[^}]*params|where\([^)]*req\.params|\.eq\(["'"'"']id["'"'"'],[[:space:]]*(req\.)?(params|query)|findById\([[:space:]]*req\.' "${SRC[@]}"
 lead "Price/amount taken from the client (recompute from the DB on the server)" \
   '\{[^}]*\b(total|price|amount|subtotal|discount)\b[^}]*\}[[:space:]]*=[[:space:]]*(req\.body|await req\.json\(\)|body)|req\.body\.(total|price|amount|subtotal|discount)' "${SRC[@]}"
 lead "Webhook/callback handlers (confirm signature or JWT check on the RAW body + replay window)" '[Ww]ebhook|[Cc]allback.*(payment|zaincash|fib|fastpay)' "${SRC[@]}"
@@ -242,7 +255,16 @@ lead "HTML injection sinks (XSS if the value is user/DB controlled)" \
   'dangerouslySetInnerHTML|\.innerHTML[[:space:]]*=|v-html|insertAdjacentHTML|document\.write\(|bypassSecurityTrust|\{@html' "${SRC[@]}"
 lead "SQL built from strings" \
   '(raw(Query|Insert|Update|Delete)|execute|query|unsafe|\$queryRawUnsafe)\([^)]*(\$\{|\$[a-zA-Z_]|["'"'"'`][[:space:]]*\+)|execute\([[:space:]]*f["'"'"']' "${SRC[@]}"
-lead "Code/command execution" '\beval\(|new Function\(|child_process|execSync\(|os\.system\(|shell=True' "${SRC[@]}"
+lead "SQL built from strings (Python, Java, C#, Go, PHP, Ruby)" \
+  '\.raw\([[:space:]]*f["'"'"']|cursor\.execute\([^)]*%[[:space:]]*\(|execute(Query|Update)?\([[:space:]]*"[^"]*"[[:space:]]*\+|createStatement\(\)|FromSqlRaw\([[:space:]]*\$"|ExecuteSqlRaw\([[:space:]]*\$"|new SqlCommand\([[:space:]]*(\$"|"[^"]*"[[:space:]]*\+)|Sprintf\([[:space:]]*"(SELECT|INSERT|UPDATE|DELETE)|mysqli_query\([^)]*\$_(GET|POST|REQUEST)|\.where\([[:space:]]*"[^"]*#\{' "${SRC[@]}"
+lead "Code/command execution" '\beval\(|new Function\(|child_process|execSync\(|os\.system\(|shell=True|Runtime\.getRuntime\(\)\.exec\(|exec\.Command\("(sh|bash|cmd)"|\b(shell_exec|passthru|proc_open)\(|\b(exec|system)\([[:space:]]*\$' "${SRC[@]}"
+lead "Unsafe deserialization (never on untrusted data)" \
+  'pickle\.loads?\(|torch\.load\(|ObjectInputStream|BinaryFormatter|TypeNameHandling\.(All|Auto|Objects)|\bunserialize\(|Marshal\.load|YAML\.load\(' "${SRC[@]}"
+grep -rnIE "${SRC[@]}" "${EXCL[@]}" -e 'yaml\.load\(' . 2>/dev/null | grep -vE 'SafeLoader|safe_load|CSafeLoader' \
+  | print_hits "yaml.load without SafeLoader (runs arbitrary constructors)"
+lead "Server-template escaping turned off or user input rendered as a template" \
+  'mark_safe\(|\|[[:space:]]*safe\b|autoescape[[:space:]]+off|\.html_safe\b|<%==|\{!!|Html\.Raw\(|template\.HTML\(|render_template_string\(' "${SRC[@]}"
+lead "Electron security settings switched off" 'nodeIntegration:[[:space:]]*true|contextIsolation:[[:space:]]*false|webSecurity:[[:space:]]*false|sandbox:[[:space:]]*false|allowRunningInsecureContent:[[:space:]]*true' "${SRC[@]}"
 lead "Request data flowing into fetch/redirect/file paths (SSRF, open redirect, traversal)" \
   '(fetch|axios\.(get|post)|got|request)\([[:space:]]*(req|request)\.(body|query|params)|redirect\([^)]*(req\.(query|body|params)|searchParams)|(readFile|createReadStream|sendFile|download)\([^)]*req\.(params|query|body)' "${SRC[@]}"
 lead "CORS wildcard or reflected origin (High only with credentials or cookie auth)" 'origin:[[:space:]]*(["'"'"']\*["'"'"']|true)|Allow-Origin["'"'"']?[[:space:]]*[:,][[:space:]]*["'"'"']\*|\bcors\(\)' "${SRC[@]}" "--include=*.toml" "--include=*.json" "--include=_headers"
@@ -260,8 +282,30 @@ lead "Weak randomness for secrets/IDs/codes" \
   '(Math\.random\(\)|Random\(\)\.next(Int|Double)).{0,60}([Tt]oken|[Oo]tp|[Cc]ode|[Pp]assword|[Ss]ecret|[Ii]d\b)|([Tt]oken|[Oo]tp|[Cc]ode|[Pp]in|[Pp]assword|[Ss]ecret)[A-Za-z]*[[:space:]]*=.{0,60}(Math\.random\(\)|Random\(\)\.next)' "${SRC[@]}"
 
 # ---------------------------------------------------------------------------
+dockerfiles=$(find . \( -name node_modules -o -name .git -o -name vendor \) -prune -o -type f \( -name Dockerfile -o -name '*.Dockerfile' -o -name 'Dockerfile.*' \) -print 2>/dev/null)
+if [ -n "$dockerfiles" ] || [ -d .github/workflows ] || ls ./*.tf >/dev/null 2>&1 || find . -name '*.tf' -not -path '*/.terraform/*' 2>/dev/null | grep -q .; then
+hdr "Containers, CI and infrastructure"
+printf '%s\n' "$dockerfiles" | while IFS= read -r f; do
+  [ -n "$f" ] || continue
+  grep -qE '^[[:space:]]*USER[[:space:]]' "$f" || note "container runs as root (no USER line): ${f#./}"
+  grep -nE '^[[:space:]]*(ENV|ARG)[[:space:]]+[A-Za-z0-9_]*(SECRET|TOKEN|PASSWORD|PASSWD|API_KEY|PRIVATE)[A-Za-z0-9_]*[[:space:]]*=' "$f" \
+    | mask | sed "s|^|    ${f#./}:|" | head -n "$MAX"
+  awk 'toupper($1) == "FROM" {
+         img = $2; if (img ~ /^--platform/) img = $3
+         for (i = 2; i < NF; i++) if (toupper($i) == "AS") stage[$(i + 1)] = 1
+         if (!(img in stage) && img != "scratch" && img !~ /\$/ && (img ~ /:latest$/ || img !~ /[:@]/)) bad = 1
+       } END { exit !bad }' "$f" && note "unpinned base image (latest or no tag): ${f#./}"
+done
+if [ -n "$dockerfiles" ] && [ ! -f .dockerignore ]; then note "no .dockerignore: COPY . . can ship .env and .git into the image"; fi
+lead "CI running untrusted PR code with secrets (pull_request_target / workflow_run)" 'pull_request_target|workflow_run:' "--include=*.yml" "--include=*.yaml"
+lead "CI interpolating event text into shell steps (command injection)" '\$\{\{[[:space:]]*github\.event\.(issue|pull_request|comment|review|head_commit|discussion)\.[a-z_.]*(title|body|name|message|ref|label)' "--include=*.yml" "--include=*.yaml"
+lead "Third-party actions not pinned to a commit SHA" 'uses:[[:space:]]*[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+@(v?[0-9]+(\.[0-9]+)*|main|master|latest)[[:space:]]*$' "--include=*.yml" "--include=*.yaml"
+lead "Infrastructure open to the internet or with wildcard permissions" '0\.0\.0\.0/0|"public-read(-write)?"|acl[[:space:]]*=[[:space:]]*"public|"Action"[[:space:]]*:[[:space:]]*"\*"|publicly_accessible[[:space:]]*=[[:space:]]*true' "--include=*.tf" "--include=*.json" "--include=*.yaml" "--include=*.yml"
+fi
+
+# ---------------------------------------------------------------------------
 hdr "Correctness and data smells (AI-code tells)"
-lead "Swallowed errors" 'catch[[:space:]]*(\([^)]*\))?[[:space:]]*\{[[:space:]]*\}|except[^:]*:[[:space:]]*pass\b|\.catch\(\(\)[[:space:]]*=>[[:space:]]*\{?[[:space:]]*\}?\)' "${SRC[@]}"
+lead "Swallowed errors" 'catch[[:space:]]*(\([^)]*\))?[[:space:]]*\{[[:space:]]*\}|except[^:]*:[[:space:]]*pass\b|\.catch\(\(\)[[:space:]]*=>[[:space:]]*\{?[[:space:]]*\}?\)|_[[:space:]]*=[[:space:]]*err\b|rescue[[:space:]]*=>[[:space:]]*[a-z_]+[[:space:]]*$|rescue[[:space:]]+nil' "${SRC[@]}"
 lead "Money in floating point" \
   '\b(double|float|parseFloat)\b[^;]{0,40}([Pp]rice|[Aa]mount|[Tt]otal|[Cc]ost|[Bb]alance|[Ss]ubtotal)|([Pp]rice|[Aa]mount|[Tt]otal|[Cc]ost|[Bb]alance)[A-Za-z]*[[:space:]]+(REAL|FLOAT|DOUBLE)\b|([Pp]rice|[Aa]mount|[Tt]otal|[Cc]ost|[Bb]alance|[Ss]ubtotal)\)?\.toFixed\(' "${SRC[@]}"
 lead "Read-modify-write on stock/balances (race: use a transaction or atomic increment)" \
@@ -283,7 +327,7 @@ lead "FutureBuilder/StreamBuilder future created in build (refetches on every re
   '(future|stream):[[:space:]]*[A-Za-z_][A-Za-z_.]*(\([^)]*\))?\.[A-Za-z_.]*\(' "--include=*.dart"
 lead "Device-local time stored as text" 'DateTime\.now\(\)\.toString\(\)|new Date\(\)\.toString\(\)|toLocaleString\(\)|toLocaleDateString\(\)' "${SRC[@]}"
 lead "Unfinished or placeholder code" 'TODO|FIXME|HACK|[Nn]ot implemented|[Ll]orem ipsum|mock(Data|Users|Products)' "${SRC[@]}"
-lead "Type/lint suppressions" '@ts-ignore|@ts-nocheck|eslint-disable|// ignore:|ignore_for_file|# type: ignore|noqa' "${SRC[@]}"
+lead "Type/lint suppressions" '@ts-ignore|@ts-nocheck|eslint-disable|// ignore:|ignore_for_file|# type: ignore|noqa|//nolint|#\[allow\(|@SuppressWarnings|#pragma warning disable|rubocop:disable|phpstan-ignore' "${SRC[@]}"
 lead "Loose any types" '\bas any\b|:[[:space:]]*any\b' "--include=*.ts" "--include=*.tsx"
 lead "Focused, skipped or empty tests" '\b(it|test|describe)\.(only|skip)\(|\bx(it|describe)\(|skip:[[:space:]]*true|expect\([[:space:]]*true|assert(True)?\([[:space:]]*[Tt]rue' "${SRC[@]}"
 
@@ -311,12 +355,39 @@ done | awk -v max="$MAX" '/lockfiles next to/ {print; next} {buf[++n]=$0}
 find . \( -name .git -o -name .dart_tool \) -prune -o -name pubspec.yaml -print 2>/dev/null | while IFS= read -r p; do
   [ -f "$(dirname "$p")/pubspec.lock" ] || note "no pubspec.lock next to ${p#./} (apps should commit it)"
 done
+for pair in "pyproject.toml:uv.lock poetry.lock pdm.lock requirements.txt Pipfile.lock" "go.mod:go.sum" \
+  "Gemfile:Gemfile.lock" "composer.json:composer.lock"; do
+  manifest="${pair%%:*}"; locks="${pair#*:}"
+  [ -f "$manifest" ] || continue
+  found=0; for l in $locks; do [ -f "$l" ] && found=1; done
+  [ "$found" = 1 ] || note "no lockfile next to $manifest"
+done
+[ -f Cargo.toml ] && grep -qE '^\[\[bin\]\]|^\[package\]' Cargo.toml && [ ! -f Cargo.lock ] && [ -f src/main.rs ] \
+  && note "no Cargo.lock for a binary crate (apps should commit it)"
+if [ -f package.json ]; then
+  grep -qsE '^[[:space:]]*min-release-age[[:space:]]*=' .npmrc || grep -qsE 'minimumReleaseAge' pnpm-workspace.yaml .npmrc bunfig.toml \
+    || grep -qsE 'npmMinimalAgeGate' .yarnrc.yml || note "no dependency release cooldown for JS packages (references/build/security.md §12)"
+fi
+if [ -f pyproject.toml ] || [ -f requirements.txt ]; then
+  grep -qsE 'exclude-newer|min-release-age|uploaded-prior-to' pyproject.toml uv.toml poetry.toml pip.conf \
+    || note "no dependency release cooldown for Python packages (references/build/security.md §12)"
+fi
+for f in .github/dependabot.yml .github/dependabot.yaml; do
+  [ -f "$f" ] && ! grep -q 'cooldown' "$f" && note "Dependabot without a cooldown: $f"
+done
+for f in renovate.json renovate.json5 .github/renovate.json .renovaterc .renovaterc.json; do
+  [ -f "$f" ] && ! grep -q 'minimumReleaseAge' "$f" && note "Renovate without minimumReleaseAge: $f"
+done
 has() { grep -rqIE "${EXCL[@]}" "$@" . 2>/dev/null; }
 any .github/workflows/*.y*ml .gitlab-ci.yml bitbucket-pipelines.yml codemagic.yaml || note "no CI config found"
-any .eslintrc* eslint.config.* biome.json* analysis_options.yaml ruff.toml .flake8 */analysis_options.yaml || note "no lint config found"
+any .eslintrc* eslint.config.* biome.json* analysis_options.yaml ruff.toml .ruff.toml .flake8 */analysis_options.yaml \
+  .golangci.y*ml phpstan.neon* .rubocop.yml .editorconfig detekt.yml .swiftlint.yml .clang-tidy \
+  || grep -qsE '^\[tool\.(ruff|mypy|pyright)' pyproject.toml || note "no lint config found"
 any .env.example .env.sample .env.template */.env.example || note "no .env.example documenting required variables"
 any README* || note "no README"
-tests=$(find . \( -name node_modules -o -name .git \) -prune -o -type f \( -name '*_test.dart' -o -name '*.test.*' -o -name '*.spec.*' -o -name 'test_*.py' \) -print 2>/dev/null | wc -l)
+tests=$(find . \( -name node_modules -o -name .git -o -name vendor \) -prune -o -type f \( -name '*_test.dart' -o -name '*.test.*' -o -name '*.spec.*' \
+  -o -name 'test_*.py' -o -name '*_test.py' -o -name '*_test.go' -o -name '*Test.java' -o -name '*Test.kt' -o -name '*Tests.cs' \
+  -o -name '*Test.cs' -o -name '*_spec.rb' -o -name '*_test.rb' -o -name '*Test.php' \) -print 2>/dev/null | wc -l)
 note "test files found: $tests"
 has -e 'sentry|crashlytics|bugsnag|rollbar|datadog|highlight\.run|posthog' || note "no crash/error reporting SDK found"
 has -e '[Rr]ate.?[Ll]imit|express-rate-limit|@upstash/ratelimit|[Tt]hrottle|App ?Check' || note "no rate limiting or App Check found"
