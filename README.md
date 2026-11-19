@@ -62,3 +62,7 @@ Restart Claude Code, then type `/vibe-code`, or just describe what you want buil
 | `references/audit/quality.md` | Audit: correctness, data, performance, UX/RTL, tests, readiness, and the launch verdict |
 | `scripts/scan.sh` | The audit's read-only lead finder: masks secrets and scans the whole git history |
 | `scripts/guard-commands.mjs` | A Claude Code hook that blocks destructive git commands and risky deletes, and asks before production deploys |
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
