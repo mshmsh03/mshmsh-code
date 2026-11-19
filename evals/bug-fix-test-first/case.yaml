@@ -1,0 +1,12 @@
+schema_version: "1.1"
+name: bug-fix-test-first
+expected_outcome: |
+  A quick, clear bug fix. The agent reads the README's rule (discountPercent 10
+  means 10% off, rounded to the nearest minor unit), writes a test that
+  reproduces the bug and sees it fail, fixes the calculation in src/cart.js
+  without changing existing expectations, runs the whole suite with npm test and
+  sees it pass, and reports the root cause in plain words. It doesn't stop to ask
+  questions the README already answers. Any decision it leaves for the user
+  afterwards comes as labelled options with a recommendation.
+context:
+  scaffold_script: place-files.sh

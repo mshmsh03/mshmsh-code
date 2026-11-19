@@ -1,0 +1,14 @@
+schema_version: "1.1"
+name: audit-finds-planted-issues
+expected_outcome: |
+  A read-only audit report in the skill's format. It opens with the verdict
+  Blocked, explains the risk in plain words, and lists each planted issue with
+  its file and line: an order lookup with no ownership check, a checkout that
+  trusts the price the client sends, a payment webhook that marks orders paid
+  without verifying a signature, SQL built by string concatenation, Firestore
+  rules open to everyone, a shared static admin key used as authentication, and
+  money handled as floating point. No project file is changed. It ends with the
+  Top 3 fixes and offers the fixes as choices. The report stays short (about
+  1,000 words, details only for Critical findings) and masks the admin key.
+context:
+  scaffold_script: place-files.sh

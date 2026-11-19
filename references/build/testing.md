@@ -1,6 +1,6 @@
 # Testing: TDD, good tests, E2E
 
-Read this when writing or reviewing tests. SKILL.md "Build test-first" has the short version.
+Read this when writing or reviewing tests, in any language. SKILL.md Build §10 has the short version.
 
 ## Contents
 1. What to test, at which level
@@ -15,14 +15,26 @@ Read this when writing or reviewing tests. SKILL.md "Build test-first" has the s
 
 ## 1. What to test, at which level
 
-- Find the repo's commands for **one test** and for **the full suite** before writing the first test: `flutter test test/sale_test.dart` / `flutter test`, `npx jest path/to/file` / `npm test`, `npx playwright test file`. Record them in the context file.
+- Find the repo's commands for **one test** and for **the full suite** before writing the first test, and record them in the context file. Examples:
+
+| Stack | One test | Full suite |
+|---|---|---|
+| JS/TS | `npx vitest run path/to/file -t "name"`, `npx jest path -t "name"` | `npm test` |
+| Python | `pytest tests/test_sale.py::test_refuses_zero_stock` | `pytest` |
+| Go | `go test ./sales -run TestRefusesZeroStock` | `go test ./...` |
+| Rust | `cargo test refuses_zero_stock` | `cargo test` |
+| Java/Kotlin | `./gradlew test --tests "*SaleTest*"` | `./gradlew test` |
+| .NET | `dotnet test --filter "FullyQualifiedName~SaleTests"` | `dotnet test` |
+| Flutter | `flutter test test/sale_test.dart` | `flutter test` |
+| PHP / Ruby | `vendor/bin/phpunit --filter SaleTest` / `bundle exec rspec spec/sale_spec.rb:12` | `vendor/bin/phpunit` / `bundle exec rspec` |
+| E2E (web) | `npx playwright test file -g "name"` | `npx playwright test` |
 - Use the cheapest test that proves the point:
-  - **Unit tests** for pure logic: totals, discounts, tax, stock math, date rules, sync conflict resolution.
-  - **Integration tests** against real local stand-ins (in-memory SQLite, the Firebase emulator) for persistence, permissions and API behaviour.
-  - **Widget/component tests** for form, empty, loading and error states.
-  - **E2E tests** only for the critical journeys (login, sale/checkout, sync, payment). One journey per test, broken into named steps.
+  - **Unit tests** for pure logic: business rules, calculations, parsing, date rules, state transitions, sync conflict resolution.
+  - **Integration tests** against real local stand-ins (a database in a container or in memory, the Firebase emulator, local Supabase, a local queue) for persistence, permissions and API behaviour.
+  - **Component tests** (widget, component or view tests) for form, empty, loading and error states.
+  - **E2E tests** only for the critical journeys (sign-in, checkout, sync, payment, the CLI's main command). One journey per test, broken into named steps.
 - A rough mix is ~80% unit, ~15% integration, ~5% E2E. Unit tests run in under ~50 ms each, and the unit suite in under ~30 s. Slow suites stop being run.
-- Agree with the user which boundaries get tests, with one line each on what that catches and misses, so effort goes to money, stock, auth and sync paths first.
+- Agree with the user which boundaries get tests, with one line each on what that catches and misses, so effort goes to the paths that hurt first: money, permissions, data integrity, sync and migrations.
 - Coverage shows gaps; it isn't a goal. A modest CI floor is fine (~80% on changed lines). Chasing 100% produces tests that assert nothing.
 
 ## 2. The TDD loop
@@ -65,6 +77,7 @@ Read this when writing or reviewing tests. SKILL.md "Build test-first" has the s
   - **Don't mock:** your own API, database or query builder. Use real local stand-ins instead.
 - **Inject clients** (`processPayment(order, paymentClient)`) and wrap each external call in its own function (`api.createOrder`), so each fake returns one shape with no branching. Mock payloads copy the **full real shape**, and one contract test keeps them honest against the real service.
 - **Stack stand-ins:**
+  - **Any server database:** the same engine and version in a container (Testcontainers exists for Java, .NET, Go, Python, Node, Rust and more, or `docker compose`), never SQLite standing in for Postgres or MySQL.
   - **sqflite:** use `sqflite_common_ffi` with `databaseFactoryFfi` and `inMemoryDatabasePath` for real SQL in host tests.
   - **Firebase:** plugins don't load in plain `flutter test`. Use a fake for pure logic; `integration_test` against the Emulator Suite (`firebase emulators:exec`) for real behaviour; `@firebase/rules-unit-testing` to test security rules. From the Android emulator, the host machine is `10.0.2.2`.
   - **Supabase/Postgres:** run the local stack (`supabase start`) and test policies as different users. Don't mock `from().select().eq()` chains.
@@ -86,12 +99,12 @@ Read this when writing or reviewing tests. SKILL.md "Build test-first" has the s
   - Always `await expectLater`.
   - Turn on the `unawaited_futures` lint.
 - **Time:**
-  - Pass a clock in (Dart `package:clock` with `withClock`, `fake_async`; Playwright `page.clock.install()` before `goto`). Never use real "today" in tests.
-  - Pin the timezone (`Asia/Baghdad`) and test midnight, month-end and expiry-day edges. Pharmacies live on expiry dates.
+  - Pass a clock in (Dart `package:clock` with `withClock`, `fake_async`; Python `time-machine` or `freezegun`; Java `Clock`; .NET `TimeProvider`; a `now func() time.Time` in Go; Playwright `page.clock.install()` before `goto`). Never use real "today" in tests.
+  - Pin the time zone (for example `Asia/Baghdad`) and test midnight, month-end and expiry-day edges.
 - **Stability:**
   - Run each new E2E test many times (`--repeat-each=20`) before merging.
   - Retries: 0 locally, 2 in CI. Treat "passed on retry" as flaky.
-  - Shuffle test order to expose leaked state (`flutter test --test-randomize-ordering-seed random`, `jest --randomize`) and replay with the printed seed.
+  - Shuffle test order to expose leaked state (`flutter test --test-randomize-ordering-seed random`, `jest --randomize`, `pytest -p randomly`, `go test -shuffle=on`, JUnit's random method order) and replay with the printed seed.
   - Quarantine flaky tests with a ticket; never skip them silently.
 - **Isolation:**
   - A fresh browser context per test, never a page shared via `beforeAll`.
@@ -108,7 +121,7 @@ Read this when writing or reviewing tests. SKILL.md "Build test-first" has the s
   - A request that never answers (the app must time out on its own).
   - `route.abort()` and offline, then recovery.
   - Assert the skeleton, empty state, retry button and server-side validation messages.
-- **Double-submit test:** tap "Complete sale" or "Pay" five times quickly. Expect one record, one request, and the button disabled while pending.
+- **Double-submit test:** tap "Complete sale", "Pay" or "Submit" five times quickly. Expect one record, one request, and the button disabled while pending.
 - **Console errors fail the test.** Add an automatic fixture that fails on `console.error` or `pageerror` (with a small allowlist), and catch hydration warnings in Next.js.
 - **RTL:**
   - Run a test project in `ar`/`ckb` that asserts `dir="rtl"`.

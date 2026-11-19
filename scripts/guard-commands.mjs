@@ -1,8 +1,20 @@
 #!/usr/bin/env node
-// Claude Code PreToolUse hook: blocks destructive git commands and asks before
-// risky deploys. Wire it with matcher "Bash|PowerShell" (see references/build/git-and-tooling.md).
+// Claude Code PreToolUse hook. Blocks destructive git and delete commands, and asks
+// before production deploys, publishes, infrastructure and database changes, and
+// commands that print secrets into the session. Wire it with matcher "Bash|PowerShell"
+// (see references/build/git-and-tooling.md §3). Tests: node scripts/tests/guard.test.mjs
 // Fails closed: if the hook input can't be read, the command is blocked.
 // Regex guards prevent accidents; they are not a security boundary.
+
+// A command that reads a secret file and prints it: .env files (not .env.example,
+// .env.sample or .env.template), private keys, keystores, signing and credential files.
+const SECRET_FILE =
+  String.raw`(?:\.env(?!\.(?:example|sample|template|dist|defaults)\b)(?:\.[\w-]+)?|\.envrc|[\w.-]*\.(?:pem|p12|pfx|jks|keystore|key)|key\.properties|id_(?:rsa|dsa|ecdsa|ed25519)|[\w.-]*(?:service[-_]?account|adminsdk)[\w.-]*\.json|credentials\.json|\.npmrc|\.pypirc|\.netrc|\.git-credentials)`;
+const READERS = String.raw`(?:cat|type|Get-Content|gc|head|tail|less|more|bat|nl|xxd|od|strings|base64|grep|egrep|fgrep|rg|ag|sed|awk|Select-String|sls|jq|yq)`;
+const SECRET_FILE_READ = new RegExp(
+  String.raw`(?:^|[\s;&|(])` + READERS + String.raw`\b[^|;&]*[\s"'=/\\]` + SECRET_FILE + String.raw`(?=["'\s)]|$)`,
+  "i"
+);
 
 const DENY = [
   [/\bgit\b[^|;&]*\bpush\b[^|;&]*(\s--force(?=[\s"')]|$)|\s-[a-zA-Z]*f[a-zA-Z]*(?=[\s"')]|$)|\s["']?\+[^\s"']|\s--mirror\b)/, "force-push rewrites remote history"],
@@ -39,6 +51,28 @@ const ASK = [
   [/\bgh\b[^|;&]*\brepo\s+edit\b[^|;&]*--visibility[\s=]+public\b/, "makes the repository public, including every secret ever committed to its history"],
   [/\bgit\b[^|;&]*\b(reflog\s+expire\b|gc\b[^|;&]*--prune=now)/, "destroys the reflog, the last way to recover lost commits"],
   [/\bprisma\b[^|;&]*\b(migrate\s+reset\b|db\s+push\b[^|;&]*(--force-reset|--accept-data-loss))|\bdrizzle-kit\b[^|;&]*\bpush\b[^|;&]*--force\b/, "can drop tables and data in whatever database DATABASE_URL points to"],
+  [/\brails\b[^|;&]*\bdb:(drop|reset|schema:load)\b|\brake\b[^|;&]*\bdb:(drop|reset)\b|\bartisan\b[^|;&]*\b(migrate:(fresh|reset|refresh)|db:wipe)\b|\bmanage\.py\b[^|;&]*\b(flush|reset_db)\b|\bdotnet\s+ef\b[^|;&]*\bdatabase\s+drop\b|\balembic\b[^|;&]*\bdowngrade\s+base\b/, "drops or resets whatever database the app is configured for"],
+  [/\b(dropdb|dropuser)\b|\b(psql|mysql|mariadb|sqlite3|sqlcmd|mongosh|mongo|duckdb)\b[^|;&]*\b(drop\s+(database|schema|table|collection)\b|truncate\s+table\b|dropDatabase\s*\()|\bredis-cli\b[^|;&]*\bflush(all|db)\b/i, "drops or empties a database"],
+  // publishing in other ecosystems
+  [/\bcargo\b[^|;&]*\bpublish\b(?![^|;&]*--dry-run)/, "publishes a crate to crates.io"],
+  [/\b(twine\s+upload|uv\s+publish|poetry\s+publish|flit\s+publish|hatch\s+publish)\b/, "publishes a package to PyPI"],
+  [/\bgem\s+push\b/, "publishes a gem to RubyGems"],
+  [/\b(dotnet\s+nuget|nuget)\s+push\b/, "publishes a package to NuGet"],
+  [/\bmvn\b[^|;&]*\s(deploy|release:perform)\b|\bgradlew?\b[^|;&]*\s(publish(?!ToMavenLocal\b)\w*)\b/, "publishes artifacts to a Maven repository"],
+  [/\b(bun|deno|jsr)\b[^|;&]*\bpublish\b(?![^|;&]*--dry-run)|\b(vsce|ovsx)\s+publish\b|\bpod\s+trunk\s+push\b/, "publishes a package or extension"],
+  [/\b(docker|podman)\b[^|;&]*\s(push|buildx\b[^|;&]*--push)\b/, "pushes an image to a registry"],
+  // infrastructure and hosting
+  [/\b(terraform|tofu)\b[^|;&]*\s(apply|destroy)\b|\bpulumi\b[^|;&]*\s(up|destroy)\b/, "changes real infrastructure"],
+  [/\b(fly|flyctl)\b[^|;&]*\s(deploy|destroy)\b|\brailway\b[^|;&]*\s(up|down)\b|\bwrangler\b[^|;&]*\s(deploy|publish|delete)\b/, "deploys to or deletes a live app"],
+  [/\bgcloud\b[^|;&]*\s(deploy|delete)\b|\baz\b[^|;&]*\s(deploy|delete)\b|\bazd\b[^|;&]*\s(up|deploy|down)\b/, "deploys to or deletes cloud resources"],
+  [/\baws\b[^|;&]*\s(deploy|delete-\w+|terminate-instances|rb|rm\b[^|;&]*--recursive)\b|\bsam\b[^|;&]*\sdeploy\b|\bcdk\b[^|;&]*\s(deploy|destroy)\b|\b(serverless|sls)\b[^|;&]*\s(deploy|remove)\b/, "deploys to or deletes AWS resources"],
+  [/\bkubectl\b[^|;&]*\s(apply|delete|replace|patch|scale|rollout\s+(undo|restart))\b|\bhelm\b[^|;&]*\s(install|upgrade|uninstall|rollback|delete)\b/, "changes a Kubernetes cluster"],
+  [/\bheroku\b[^|;&]*\s(releases:rollback|apps:destroy|pg:reset)\b|\bgit\b[^|;&]*\bpush\b[^|;&]*\bheroku\b/, "changes a live Heroku app"],
+  // secrets printed into the session (and so into logs and transcripts)
+  [SECRET_FILE_READ, "prints a secret file (.env, private key, keystore, credentials) into the session; read .env.example for variable names instead"],
+  [/\bgh\s+auth\s+token\b|\bheroku\s+config(?!:(set|unset|add|remove))\b|\bvercel\s+env\s+pull\b|\bnetlify\s+env:(list|get)\b|\bfirebase\b[^|;&]*\bfunctions:config:get\b|\baws\b[^|;&]*\b(secretsmanager\s+get-secret-value|ssm\s+get-parameters?\b[^|;&]*--with-decryption)|\bgcloud\b[^|;&]*\bsecrets\s+versions\s+access\b|\baz\s+keyvault\s+secret\s+show\b|\bkubectl\b[^|;&]*\bget\s+secrets?\b[^|;&]*\s-o\s*=?\s*(yaml|json|jsonpath|go-template)|\bop\s+(read|item\s+get)\b|\bdoppler\s+secrets\b/, "prints secrets from a secret store into the session"],
+  [/(?:^|[;&|(]\s*)(printenv|env)(?=\s*($|[|;&)]))|\b(Get-ChildItem|gci|dir|ls)\s+env:/i, "prints every environment variable, including secrets"],
+  [/\b(echo|printf|Write-Output|Write-Host)\b[^|;&]*\$(env:)?\{?\w*(KEY|TOKEN|SECRET|PASSWORD|PASSWD)\w*/i, "prints a secret from an environment variable"],
 ];
 
 function decide(command) {

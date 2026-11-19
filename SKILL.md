@@ -1,64 +1,166 @@
 ---
 name: "vibe-code"
-description: "Build and audit AI-made software the way a senior engineer does (\"vibe coding\"). Build mode covers questions, design and a plan before code; day-one guardrails (git, strict types, lint, hooks, CI); test-first slices; evidence before saying done; systematic debugging; secure patterns (auth, Firebase rules, Supabase RLS, secrets, payments, LLM features); stack rules for React/Next.js, Flutter, Expo, offline-first POS on SQLite, Kurdish/Arabic RTL and IQD money; shipping. Audit mode is a hostile, read-only check before launch or handoff, security first (leaked keys and git history, rules, auth and ownership, payments, mobile bundles), then correctness, data, performance, UX/RTL, tests and readiness, with a verdict and a ranked report. Use whenever the user wants to build, extend or fix an app, site, POS or feature by describing it (\"vibe code this\", \"build me an app\", \"add a feature\"), or to check one (\"is it safe\", \"ready to launch\", \"audit my app\", \"did I leak keys\"), even if they never say \"vibe coding\"."
+description: "Build, fix and audit software in any language the way a senior engineer does, and make every decision that shapes it with the user: real options, honest trade-offs, a recommendation, their pick. Build mode asks about the problem, users, specs and dev setup, recommends a stack, then designs, plans, sets guardrails (git, types, lint, tests, CI), builds test-first in small slices, solves problems at the root cause, verifies with evidence and ships. Covers web, backend/APIs, mobile, desktop, CLIs, data/AI, games and embedded, plus security, data modeling, localization/RTL, money and offline sync. Audit mode is a read-only review before launch or handoff, with a verdict and a ranked report. Use whenever the user wants to plan, build, extend, fix or debug any app, site, API, script or tool, weigh options (\"which stack should I use\", \"what are my options\", \"how should I approach this\"), or check code (\"is it safe\", \"audit my code\", \"ready to launch\"), even if they never say \"vibe coding\"."
 ---
 
 # Vibe Code
 
-One skill, two modes:
-- **Build:** making or changing software mostly by describing it ("vibe coding").
-- **Audit:** a hostile, read-only check of an app before launch, client handoff or a store release.
+A senior engineer's way of building software with an AI agent, in any language, for any kind of software. It does three jobs:
+- **Decide well, with the user.** Every choice that shapes the software is made on purpose: real options, honest trade-offs, a recommendation, and the user picks. They learn why, so they understand what they own.
+- **Solve problems at the root.** Understand the problem before the solution, find root causes, test ideas cheaply, and doubt confident answers before they harden into code.
+- **Build and check like a professional.** Specs, design, guardrails, test-first slices, evidence before "done", and a hostile audit before launch.
+
+Two modes:
+- **Build:** making or changing software mostly by describing it ("vibe coding"), from a one-off script to a product on several platforms.
+- **Audit:** a hostile, read-only review of existing code before launch, client handoff or a release.
 
 Vibe coding is fast, and it fails in predictable ways:
-- invented APIs
-- the first pattern copied everywhere
-- files that grow until they rot
+- big decisions made silently: the stack, the data model, a paid service, deleting something
+- the first idea that comes to mind instead of the one the project needs
+- invented APIs and packages
+- symptoms patched while the root cause stays
+- the first pattern copied everywhere, and files that grow until they rot
 - hardcoded secrets
-- everything a demo can't show skipped: access rules, ownership checks, error states, RTL, migrations
+- everything a demo can't show skipped: access rules, ownership checks, error states, accessibility, localization, migrations, backups
 - "done" declared before anything ran
 
 Build mode prevents those failures; Audit mode finds them.
 
-**The idea underneath everything:** AI output is only as good as its feedback loop. Set up fast automatic signals early (types, linter, tests, a running app you can look at, git to roll back), work in steps small enough that each signal is unambiguous, and never claim something works without fresh evidence.
+**Two ideas underneath everything:**
+- **AI output is only as good as its feedback loop.** Set up fast automatic signals early (types, linter, tests, a running program you can exercise, git to roll back), work in steps small enough that each signal is unambiguous, and never claim something works without fresh evidence.
+- **The software belongs to the user.** Decisions that shape it are theirs, offered as clear options in plain words, and written down so nobody re-argues them or quietly undoes them.
+
+**Short by default.** Lead with the answer, the verdict or the decision. Ask at most about five questions per round: the ones whose answers change the most. One line per option. Offer depth ("want the details?") instead of including it, and follow the user's own length preferences when they've stated them. Long material (a spec, a full findings list) goes in a file, with a short summary in chat.
+
+## How a senior engineer thinks
+
+- **Problem before solution.** Who uses it, the one job it must do well, what "done" means, and which qualities matter most here (correctness, security, speed, scale, offline, cost, time to market). Technology comes after.
+- **Options before commitment.** A decision that matters gets real alternatives before one is chosen. The first idea is rarely the best, and the user can't choose what they never saw.
+- **Care in proportion to reversibility.** Two-way doors (cheap to undo) are decided fast and changed later if wrong. One-way doors (the data model, a public API, a provider, anything shipped to devices) get slow, explicit decisions.
+- **Boring, well-known tools.** Mature, documented stacks that the user (and the AI) know well give better code, faster. Every new tool, service or dependency has to earn its place.
+- **The simplest design that meets today's requirements.** No speculative layers, plugin systems or microservices. Put clean seams where change is likely, not everywhere.
+- **Make it work, make it right, make it fast,** in that order, with evidence at each step.
+- **A pure core with thin edges.** Business rules live in plain, testable code with no UI, network or database inside; I/O sits at the edges behind small interfaces.
+- **Fail loudly, validate at the boundaries, make every write safe to retry.**
+- **Security, privacy and accessibility are designed in,** not added at the end.
+- **Automate what people forget:** formatting, linting, tests, secret scans, dependency updates, CI.
+- **Leave it better:** small refactors on green, never big rewrites on red.
+
+## Decisions: options, then the user picks
+
+Most bad software comes from decisions nobody made on purpose. Before acting on anything open, sort it:
+
+| It's... | Do this |
+|---|---|
+| A fact you can find (versions, files, how the code works today) | Look it up. Never ask. |
+| A fact only the user knows (who uses it, the budget) | Ask with your best guess, labelled as a guess, and say what you'll assume if they skip |
+| Their intent (why they want it) | One open question in their words, no options yet: options offered too early lock in your framing |
+| A choice with nameable options | Options with trade-offs and a recommendation (below) |
+| A process call (file layout, names, test order) | Yours. Do it, and mention it if it matters |
+
+**Who decides:**
+- **The user** decides what is theirs by nature or expensive to reverse: product behaviour and UX, business rules (money, stock, permissions), deleting anything, spending money, the stack, the data model, public APIs, providers and hosting, anything that migrates data or ships to users' devices, and trade-offs between things they value (cost vs speed, simplicity vs flexibility, date vs scope).
+- **You** decide what is reversible in minutes, inside the agreed design, with one clearly better answer by the project's own rules. Say what you chose in a line.
+- Ask only when the answer would change what gets built and neither the request nor the project answers it. The user can move the line ("just decide the technical stuff", "ask me everything"); product, money and deletion stay theirs either way.
+
+**Making real options:**
+- Restate the problem in one sentence and list the constraints every option must meet.
+- Generate widely, then keep 2-4 that truly differ: the boring standard, the simplest thing that could work, reuse or buy, defer or do nothing, the robust one, one that changes the problem. Add "Keep as is" when changing existing work.
+- No straw men, nothing the constraints already rule out, and never re-offer a declined option.
+- For each option know what it gives, what it costs (effort S/M/L, money, complexity), the risk, how hard it is to reverse, and how it fits the team, the code and the deadline. For big decisions, score the options against the spec's weighted criteria and say what becomes easier, what becomes harder, and what to revisit.
+- Recommend one, listed first, with a reason tied to their spec or goal, never to taste.
+
+**Asking:**
+- With the question tool (AskUserQuestion): up to 4 independent decisions per call, 2-4 options each, the recommended option first with "(Recommended)" at the end of its label, the cost and trade-off in every description, a `header` of 12 characters or fewer, and a `preview` for anything easier to judge by seeing it (a code sketch, schema, API shape, folder tree, command). Each question must stand alone, because text written next to it may be hidden while it's open.
+- Without the tool: lettered options in text, one line each with its cost, then wait.
+- Keep each round small: the decision that matters most now, plus at most a few independent ones. The rest wait.
+- Big to small for new work (stack, then architecture, data model, details); worst first for fixes. Number long queues ("Decision 2 of 5"). Dependent decisions go one at a time; independent ones share a round.
+- If nobody can answer (a subagent, a scheduled run): decide two-way doors and mark them "decided for you"; for one-way doors, do the independent work and return the decision cards.
+
+**After the answer:**
+- **A pick:** apply exactly that option, with nothing extra riding along. Verify it and show the result in a line or two.
+- **A mix:** build it if it's coherent; if parts conflict, say how and offer the closest coherent version.
+- **"You decide":** take the recommendation, say what you picked and why, and mark it "decided for you". Confirm one-way doors in one line first.
+- **"None of these" or "I don't know":** ask what's missing, explain the real-world difference ("A costs nothing until about 1,000 users; B is $25 a month from day one"), and offer fresh options.
+- **A skip or a no:** keep as is and add it to the Declined list.
+- **Their own edit to the code** is a decision too: re-read before your next change, and never revert it.
+
+**Write it down** in `docs/decisions.md`: the date, the options, the pick and who made it, why, the consequences and when to revisit, plus a Declined list. One-way doors also get an ADR in `docs/adr/`. Read both at the start of every session.
+
+**Teach as you decide.** Give the why in one or two plain sentences tied to their project ("totals are stored as whole dinars, because decimals drift and the day's report would never match the cash"), name the concept once so they can look it up, and offer more depth instead of lecturing.
+
+Details: `references/build/decisions-and-problem-solving.md` §1-7 and §11.
+
+## Solving problems
+
+- **Recognize the shape first:**
+  - **Clear** (the answer is known): apply the standard pattern.
+  - **Complicated** (knowable with analysis): read the code, docs and data, then compare options.
+  - **Complex** (nobody can know in advance: performance on real data, how users react, an unfamiliar library): run a small time-boxed spike, then decide from what it shows.
+  - **On fire** (production down, data being lost): stabilize first (roll back, switch the feature off), then analyse.
+- **State it precisely** (expected vs actual, or current vs desired, with numbers) and **find the root cause before choosing a fix:** keep asking why until you reach something that, once changed, prevents the whole class of problem.
+- **Tools:** first principles (what must be true, and what's only habit?), working backwards from the acceptance criteria, divide and conquer (`git bisect`), finding the one bottleneck before optimizing anything, inversion ("how would this surely fail?"), second-order effects (a cache adds staleness, a retry adds duplicates), and spikes for unknowns.
+- **Doubt your own non-trivial decisions while they're cheap to change:** new branching logic, crossing a module or service boundary, claims the compiler can't check ("thread-safe", "secure", "scales"), anything hard to reverse. Write the claim in two lines, have the artifact reviewed adversarially on its own (a fresh-context subagent where available), fix what's real, and stop after three rounds. Skip this for mechanical changes and clear instructions.
+- **Check big calls for bias:** anchoring on the first idea, familiarity over fit, novelty for its own sake, sunk cost, and looking only for evidence that agrees.
+- **Pre-mortem big plans and launches:** imagine it failed, then sort what you find into tigers (real: launch-blocking, fast-follow or track), paper tigers (note why not) and elephants (unspoken: investigate).
+- **After about three failed attempts at one approach,** stop: restate the problem, question the assumptions, consider another approach or a fresh session, and tell the user what you tried.
+
+Details: `references/build/decisions-and-problem-solving.md` §8-10; for bugs, `references/build/debugging.md`.
 
 ## Pick the mode
 
-- **Build** when the user wants something made, extended or fixed ("build", "add", "fix", "make it work", "vibe code this"). Follow "Rules for every change" and the Build workflow. For a trivial one-off script, skip the ceremony but keep the verification.
-- **Audit** when the user wants an app checked ("check", "audit", "review my app", "pentest", "is it safe", "ready to launch", "did I leak keys", "are my Firebase rules ok"). Follow the Audit workflow. Audit mode is **read-only**: change nothing, never exploit anything, and mask every secret you quote.
+- **Build** when the user wants something made, extended, fixed or planned ("build", "add", "fix", "make it work", "which language or stack should I use", "vibe code this"). Follow "Rules for every change" and the Build workflow. For a trivial one-off script, skip the ceremony but keep the verification.
+- **Audit** when the user wants code checked ("check", "audit", "review my app", "pentest", "is it safe", "ready to launch", "did I leak keys"). Follow the Audit workflow. Audit mode is **read-only**: change nothing, never exploit anything, and mask every secret you quote.
 - **After an audit,** fixing the findings is Build mode, starting with the Top 3.
 - For a single diff or PR, Claude Code's `/review` (or `/code-review` from the code-review plugin) and `/security-review` are lighter options.
 
 ## Where you're running
 
 - **Claude Code:** everything here applies, including the guard hook, `/review`, `/security-review` and `/simplify`.
-- **Claude app (cloud workspace):** no hooks or slash commands. Offer the guard hook for the user's own Claude Code rather than installing it here, and use §11's review checklist wherever a slash command is named. Run the scripts on a copy of the repo in the workspace (a GitHub clone or an uploaded zip), or run the same checks by hand with a shell on the user's computer. Nothing built in the workspace reaches the user until you send it or push it.
+- **Claude app (cloud workspace):** no hooks or slash commands. Offer the guard hook for the user's own Claude Code rather than installing it here, and use Build §12's review checklist wherever a slash command is named. Run the scripts on a copy of the repo in the workspace (a GitHub clone or an uploaded zip), or run the same checks by hand with a shell on the user's computer. Nothing built in the workspace reaches the user until you send it or push it.
 
 ## Where the details are
 
+**Process** (read as the workflow reaches each step):
+
 | Read | When |
 |---|---|
-| `references/build/planning.md` | Anything bigger than a quick fix: questions, design doc, prototypes, slicing, plan format, executing a plan, subagents, ADRs |
-| `references/build/architecture-and-data.md` | Stack choice, modules, API shape, errors, idempotency, schema, indexes |
-| `references/build/git-and-tooling.md` | Project setup, commits, the guard hook, pre-commit, CI, merge conflicts |
-| `references/build/testing.md` | TDD, good tests, mocks, flaky tests, E2E, RTL tests |
+| `references/build/decisions-and-problem-solving.md` | The first real decision in a project, any hard trade-off, a big plan to stress-test, or a problem that resists the obvious fix |
+| `references/build/discovery-and-specs.md` | Anything bigger than a quick fix: questions, specs, quality needs, constraints, dev environment, accounts and costs |
+| `references/build/choosing-a-stack.md` | Picking languages, frameworks, databases and hosting for a new project or a new part of one |
+| `references/build/planning.md` | Design doc, prototypes, slicing, plan format, executing a plan, subagents |
+| `references/build/architecture-and-data.md` | Modules, API shape, errors, idempotency, data modelling, queries, transactions |
+| `references/build/git-and-tooling.md` | Project setup per language, commits, the guard hook, secret deny rules, pre-commit, CI, merge conflicts |
+| `references/build/testing.md` | TDD, test levels, runners per language, mocks, flaky tests, E2E |
 | `references/build/debugging.md` | Something's broken and the first obvious fix didn't work |
-| `references/build/security.md` | Building auth, Firebase rules, Supabase RLS, secrets, payments, uploads, rate limits, LLM features |
-| `references/build/web-frontend.md` | Any web UI: RTL, forms, the four states, accessibility, Core Web Vitals, React/Next.js |
-| `references/build/mobile-and-offline.md` | Flutter, Expo/React Native, Windows tills, offline POS, SQLite, IQD, printing, Kurdish RTL |
-| `references/build/shipping.md` | Environments, deploys, signing and store release, flags, monitoring, launch checklist |
-| `references/audit/security.md` | Audit: per-stack security checks, detection commands, severity calls |
-| `references/audit/quality.md` | Audit: correctness, data, performance, UX/RTL, tests, readiness, and the launch verdict |
+| `references/build/security.md` | Auth, access rules, secrets, input handling, supply chain, payments, uploads, rate limits, LLM features |
+| `references/build/shipping.md` | Environments, deploy targets, releases, monitoring, maintenance, client handoff |
+
+**Platforms and cross-cutting concerns** (read the ones the project has):
+
+| Read | When |
+|---|---|
+| `references/platforms/web.md` | Any web UI, in any framework |
+| `references/platforms/backend-and-apis.md` | Servers, APIs, databases, background jobs, Firebase/Supabase and other backend services |
+| `references/platforms/mobile.md` | iOS and Android: native, Flutter, React Native/Expo |
+| `references/platforms/desktop.md` | Windows, macOS and Linux apps |
+| `references/platforms/cli-scripts-automation.md` | Command-line tools, scripts, scheduled jobs, bots, scrapers |
+| `references/platforms/data-and-ai.md` | Data pipelines, analytics, machine learning, LLM-powered features |
+| `references/platforms/games-embedded-other.md` | Games, embedded and IoT, browser extensions, libraries and packages |
+| `references/concerns/localization-and-rtl.md` | More than one language, right-to-left scripts (Arabic, Kurdish, Hebrew, Persian), non-Latin digits, time zones |
+| `references/concerns/money-and-business-rules.md` | Prices, currencies, payments, invoices, stock, ledgers, audit trails |
+| `references/concerns/offline-first-and-sync.md` | Must keep working without internet; local databases, sync, printers and scanners |
+
+**Audit:** `references/audit/workflow.md` (commands per stack, attack surface, severity, report format), `references/audit/security.md` (security checks for every stack, detection commands, severity calls) and `references/audit/quality.md` (correctness, data, performance, UX, tests, readiness, and the launch verdict).
 
 Version numbers, CVE floors and store deadlines in these files are snapshots (last checked Nov 2026). Check the current docs or advisories before relying on one.
 
 **Scripts:**
-- `scripts/scan.sh`: the audit's first-pass lead finder. It masks secrets, scans the whole git history, and is read-only.
-- `scripts/guard-commands.mjs`: a Claude Code hook that blocks destructive git commands and asks before production deploys. Setup is in `references/build/git-and-tooling.md` §3.
+- `scripts/scan.sh`: the audit's first-pass lead finder for most languages. It masks secrets, scans the whole git history, and is read-only.
+- `scripts/guard-commands.mjs`: a Claude Code hook that blocks destructive commands, asks before production deploys and publishes, and asks before printing secret files. Setup is in `references/build/git-and-tooling.md` §3.
+- `scripts/tests/`: `node scripts/tests/guard.test.mjs` and `bash scripts/tests/scan.test.sh`. Run both after changing either script.
 
-**Related skills, when installed:**
-- `interview-me` (or `grill-me`), `spec-driven-development`, `domain-modeling`
-- `designa-xoshaka` (or `impeccable` / `unslop-ui`) for how a UI looks, including Kurdish/Arabic layout; `unslop-code`
-- `doubt-driven-development`, `flutter-apply-architecture-best-practices`, `claude-api`
+**Related skills, when installed:** `interview-me` or `grill-me` (intent), `spec-driven-development`, `domain-modeling`, `doubt-driven-development`, `pre-mortem`, `tdd`; `designa-xoshaka` (or `impeccable` / `unslop-ui`) for how a UI looks; `unslop-code`; `claude-api`; and official stack skills (Supabase, Expo, Vercel's React rules, Flutter) when the project uses that stack.
 
 # Rules for every change
 
@@ -69,93 +171,67 @@ Before claiming done, fixed or passing, run the command that proves it, fresh an
 | Claim | Evidence required |
 |---|---|
 | Tests pass | the full suite, run now: 0 failures |
-| It builds | the build command, exit 0 (a clean lint is not a build) |
+| It builds | the build or compile command, exit 0 (a clean lint is not a build) |
 | Bug fixed | the original reproduction, now passing |
 | The new test works | seen red without the fix, green with it |
-| The UI works | the running app driven and looked at (browser automation, a device, a screenshot) |
+| It works | the running program exercised the way a user would: a browser or device driven and looked at, the CLI run on real input, the API called |
 | A subagent says success | its diff read and its tests re-run |
 | Requirements met | checked line by line against the spec or plan |
 
-- **Watch for invented APIs:** functions, options and methods that sound right but don't exist. For anything unfamiliar or version-sensitive, check the installed version's types or docs rather than recall. Check that packages are real, maintained, and the ones you meant.
+- **Watch for invented APIs:** functions, options and packages that sound right but don't exist. For anything unfamiliar or version-sensitive, check the installed version's types, official docs or source rather than recall; blog posts, forum answers and AI-written tutorials are leads, not authority. Check that packages are real, maintained, and the ones you meant.
 - **Suspiciously perfect output for a hard problem is a reason to check more.** "Should work" or "probably fine" before evidence is a red flag. Say what you verified and, as clearly, what you didn't.
 - **Scan your own diff for cheap greens:**
-  - new `@ts-ignore`, `eslint-disable` or `// ignore:`
-  - skipped or deleted tests, weakened assertions
-  - empty `catch` blocks
+  - new lint or type suppressions (`@ts-ignore`, `eslint-disable`, `# type: ignore`, `# noqa`, `//nolint`, `@SuppressWarnings`, `#[allow(...)]`)
+  - skipped or deleted tests, weakened assertions, lowered thresholds (coverage, budgets, severity levels)
+  - empty `catch`/`except` blocks
   - stubs where code should be
 
   Loosening any check must be announced and justified.
 
 ## Security
 
-- **Secrets stay on servers.** Anything that reaches a client is public:
-  - `NEXT_PUBLIC_`/`VITE_`/`EXPO_PUBLIC_` values
-  - Expo `extra`, Flutter `--dart-define` values, bundled `.env` assets
-  - the JS bundle and the APK
-
-  Paid and privileged keys go behind a server endpoint (for Gemini in a Firebase app, Firebase AI Logic with App Check enforced is the alternative). If you're about to type a literal key into a file, stop. A leaked key is rotated, not just deleted.
-- **Every endpoint, function, Server Action and RPC follows the same steps:**
+- **Secrets stay on servers and out of repos.** Anything shipped to a browser, phone, desktop app or public repo is public: web build-time variables (`NEXT_PUBLIC_`, `VITE_`, `EXPO_PUBLIC_` and the like), mobile build defines, bundled config files, app binaries and container images. Paid and privileged keys go behind a server endpoint, or a provider's own client path that protects them (for example Firebase AI Logic with App Check enforced). If you're about to type a literal key into a file, stop. A leaked key is rotated, not just deleted.
+- **Keep secrets out of your own context.** Don't open, print or grep real `.env` files, keystores or credential files; read `.env.example` for variable names. In Claude Code, deny rules and the guard hook back this up (`references/build/git-and-tooling.md` §3).
+- **Every entry point follows the same steps** (route, handler, serverless function, RPC, GraphQL resolver, queue consumer, privileged CLI command):
   1. Authenticate on the server.
   2. Validate the input against a schema, copying only allowed fields.
   3. Load the object and check ownership or role.
   4. Act, recomputing prices and totals on the server.
+  5. Return only the fields the caller needs.
 
-  Put the steps in one shared helper. `firebase-admin` and the Supabase service role bypass all rules, so code using them checks for itself.
-- **Firebase rules and Supabase RLS:**
-  - Deny by default.
-  - Roles from custom claims or `app_metadata`, never from user-editable data.
-  - "Signed in" never means "allowed": anyone can create a Firebase account with the public API key.
-  - The same validation on create and update.
-  - Sales and payments append-only.
-  - Tested in the emulator or local stack with a second user.
-- **Payments** (Stripe where it serves the merchant; for Iraqi clients, gateways such as FIB, ZainCash or FastPay):
-  - The amount comes from the server.
-  - "Paid" is set only by a callback verified on the server (signature, or re-querying the gateway).
-  - Callbacks are idempotent by transaction ID.
-- **Rate-limit** auth, OTP, email/SMS, uploads and AI endpoints, with a shared store and provider spend caps.
+  Put steps 1-3 in one shared helper. Admin and service credentials (an admin SDK, a service-role key, a superuser DB connection) bypass access rules, so code using them checks for itself.
+- **Untrusted input never runs as code:** parameterized queries, argument lists instead of shell strings, auto-escaping templates, and no unsafe deserialization of untrusted data.
+- **When clients talk to the database directly** (Firebase, Supabase and similar), the rules are the backend: deny by default, roles from server-set claims, "signed in" never means "allowed", and everything tested with a second user.
+- **Payments:** the server sets the amount; only a server-verified callback marks something paid; callbacks are idempotent by transaction ID.
+- **Least privilege** for database users, API tokens, cloud roles and app permissions. **Rate-limit** auth, OTP, messaging, uploads and paid or AI endpoints, with provider spend caps.
+- **Dependencies:** commit the lockfile, confirm each new package is real and the one you meant, and turn on the ecosystem's release cooldown so brand-new versions wait a few days before install (`references/build/security.md` §12).
 - **Auth, payments, access control and migrations get line-by-line review** by the user, and an Audit-mode security pass (or `/security-review`) before they're called done.
-- **Dependencies:** pin them with a committed lockfile. If the project will be sold or open-sourced, flag dependency licences.
 
 Details: `references/build/security.md`.
 
-## Stack rules AI-written code usually gets wrong
+## Pitfalls AI-written code hits in every stack
 
-**Kurdish/Arabic and RTL:**
-- Web: `<html lang="ckb" dir="rtl">` in the served HTML, and logical CSS (`margin-inline-start`, Tailwind `ms-/me-`).
-- Flutter has **no built-in `ckb` localizations**. Add fallback delegates to Arabic, or the app renders left-to-right. Use `EdgeInsetsDirectional` and `AlignmentDirectional`, and never wrap the app in an LTR `Directionality`.
-- Normalize Arabic-Indic digits (٠-٩, ۰-۹) before parsing: `int.tryParse('١٢٣')` is null and `Number('١٢٣')` is NaN.
-- Normalize ي/ی and ك/ک for search.
-- Isolate phone numbers and barcodes as LTR.
-- Use a font with ڕ ڵ ێ ۆ ە, and no letter-spacing on Arabic script.
+**Data and state:**
+- **Money:** integers in minor units or a decimal type, one rounding rule, an explicit currency, and totals derived from line items. Never binary floats.
+- **Time:** store UTC instants written by the server; convert to the user's time zone only for display; never parse ambiguous date strings; a date-only value (a birthday, a due date) is not a timestamp.
+- **Retries and races:** client-generated IDs or idempotency keys on every write that can be retried, unique constraints in the database, and atomic updates or transactions instead of read-compute-write.
+- **Migrations** run on existing data and on every installed version still in use; backups are restored at least once.
 
-**Money:**
-- Integers end to end (IQD in whole dinars), one rounding function, totals derived from line items.
-- Format with an explicit `IQD` and 0 decimals. Plain `ar` locales default to other currencies and `.00`.
+**Text and people:**
+- UTF-8 everywhere, locale-aware formatting of numbers, dates and currency, and whole translated sentences instead of concatenated fragments.
+- Right-to-left scripts, non-Latin digits (`Number('١٢٣')` is `NaN` in JavaScript, and most parsers need them normalized first) and fonts that cover every letter you need.
+- Accessibility: real labels, keyboard and screen-reader support, contrast, and layouts that survive larger text.
 
-**Offline POS:**
-- The local SQLite DB is the ledger, with an outbox, device-generated UUIDv7 IDs and tombstones.
-- Firestore transactions fail offline, and awaited Firestore writes in the checkout path freeze the till.
-- Stock is a sum of movements with an explicit oversell policy.
-- Firebase's Windows SDK isn't meant for production, so Windows tills need their own sync path.
-- Turn on `PRAGMA foreign_keys`. Never use `REPLACE` upserts on rows that have children.
-- Test migrations from every shipped version.
+**Failure and limits:**
+- No swallowed errors: one error shape, a clear message for the user, the details in logs.
+- Every async view has loading, empty, error and success states.
+- Timeouts on every network call, pagination on every list, size limits on uploads and queries.
+- Flaky or missing internet is normal for mobile, field and shop apps.
 
-**Web:**
-- Loading, empty, error and success states on every async view.
-- Real labels on inputs; never block paste or zoom.
-- No component defined inside a component; derive state instead of syncing it with effects.
-- Image dimensions set, and the hero image never lazy-loaded.
-- Server Actions check auth themselves.
-- OG tags in the served HTML, so WhatsApp previews work.
+**Release:**
+- Release builds signed with real, backed-up keys, debug settings off, crash reporting from day one.
 
-**Mobile:**
-- Release builds signed with a real, backed-up key; the Flutter template signs them with the debug key.
-- Tokens in secure storage.
-- Builder lists (`ListView.builder`, FlashList).
-- Crash reporting from day one.
-- Native libraries (SQLite builds, printer and scanner SDKs) built for 16 KB memory pages, or Play rejects the update.
-
-Details: `references/build/web-frontend.md`, `references/build/mobile-and-offline.md`, `references/build/shipping.md` §3.
+Details: `references/concerns/` for money, localization and offline; each `references/platforms/` file for its platform's traps.
 
 ## Git
 
@@ -171,46 +247,63 @@ Details: `references/build/git-and-tooling.md`.
 
 ## 1. Check that vibe coding fits
 
-Vibe coding fits prototypes, internal tools, MVPs and anything where iteration speed matters most. Slow down for:
+Vibe coding fits prototypes, internal tools, MVPs, scripts and anything where iteration speed matters most. Slow down for:
 - security- or money-critical logic
 - data migrations and production data
-- billing and stock counts
-- hot paths where "it works" isn't "it's fast enough"
+- billing, stock and anything that must add up
+- concurrency, hot paths and anything where "it works" isn't "it's fast enough"
+- firmware and other code that's hard to update once shipped
 
 For those, review the code like a junior engineer's, or write the sensitive core by hand, and tell the user plainly. A prototype built to answer a question is fine, as long as it's labelled throwaway and rewritten properly if it survives.
 
-## 2. Understand
+## 2. Discover the problem, the specs and the setup
 
 - **Size it out loud:**
-  - Quick task (a bug fix, a one-file change): do it, then say what you assumed.
-  - Small change (one module or screen with clear requirements): state the approach and assumptions in 2-3 lines, or at the top of a short plan file, then build test-first. Ask first only when the choice is the user's: the data model, money or stock rules, UX, deleting anything.
-  - Project (a new app, work across modules or sessions, or anything touching auth, payments between systems, or sync): questions, design, plan, then build.
+  - Quick task (a bug fix, a one-file change, a small script): do it, then say what you assumed.
+  - Small change (one module or screen with clear requirements): state the approach and assumptions in 2-3 lines, or at the top of a short plan file, then build test-first. Stop to ask only for the user's own decisions (see Decisions).
+  - Project (a new app or service, work across modules or sessions, or anything touching auth, payments, sync or more than one platform): discovery, stack choice, design, plan, then build.
 
-  Step up a size if a "small change" turns out to touch auth, sync or the schema.
-- **Look things up before asking.** The repo, docs, data and history are your job; only decisions go to the user. For technical owners, ask in numbered rounds, each question with a recommended answer they can accept with "yes".
+  Step up a size if a "small change" turns out to touch auth, sync, the schema or a public API.
+- **Look things up before asking.** The repo, its manifests and lockfiles, docs, data, history and the installed tools are your job.
+- **Intent first.** Until you know why they want it, ask open questions in their words. Listen for "should want" answers ("scalable", "clean architecture", "the standard way") and ask what they would want if they didn't have to justify it.
+- **Then ask in short numbered rounds:** at most about five questions whose answers change the design most and whose prerequisites are already answered, each with your best guess or recommended default, worded so "yes" accepts it. Everything else waits for a later round or goes into the spec as a stated default.
+- **For projects, cover:**
+  - **Goal and users:** who uses it, the one job it must do well, what success looks like.
+  - **Functional specs:** the main user flows as short stories with acceptance criteria, and what's out of scope.
+  - **Quality needs:** users and data volume, speed targets, offline use, security and privacy, languages, currency and time zones, accessibility, devices and platforms, uptime.
+  - **Constraints:** budget for hosting, paid services and store fees; the deadline; existing systems and data to integrate or migrate; who maintains it afterwards.
+  - **The dev setup:** operating system and machine, languages and tools already installed (check versions yourself where you can), editor, hardware limits (iOS builds need a Mac), and the accounts and keys the project will need.
 - **Questions meant for a client:** draft them for the user to forward, in plain words, each tied to a real moment ("the last time a customer returned something"), most important first.
-- **Cover:**
-  - who uses it, and the one job it must do well
-  - what success looks like
-  - constraints: offline? devices? languages, digits, currency? deadline?
-  - what exists, and what's out of scope
+- **Play it back before building:** outcome, users, success, the binding constraint and what's out of scope, in their words, and get an explicit yes. "Whatever you think" is not a yes: offer two concrete options instead.
+- **Write it down** as a short spec (`docs/specs/YYYY-MM-DD-<topic>-spec.md`). In chat, name only the defaults that change the design; the spec lists the rest, labelled as guesses, where the user can correct them. Push back on weak ideas, with the reason.
 
-  Say every default out loud and label guesses. Push back on weak ideas, with the reason.
-- **One concrete task at a time,** with real reference material: mockups, the client's product list, existing code to match.
+Details: `references/build/discovery-and-specs.md`.
 
-## 3. Design (projects)
+## 3. Choose the stack: ask, then recommend
 
-- **Propose 2-3 approaches** with trade-offs and a recommendation, and prefer the simplest that meets the goal. Make "done" concrete with mockups, example inputs and outputs, or a receipt layout. For tricky business rules (returns, debts, discounts, stock), a clickable one-file logic prototype beats any description.
+The stack is the first one-way door, so it gets the full Decisions treatment.
+- **An existing project keeps its stack.** Use its language, framework, libraries and conventions; don't add a second way of doing what it already does.
+- **For a new project or a new part, offer 2-3 stacks.** For each: the stack in one line, why it fits these specs, its trade-offs (learning curve, hosting cost, ecosystem maturity, performance, how well AI tools know it, who can maintain it), and which one you recommend. A language the user already knows counts strongly in its favour.
+- **Match the tool to the job, not to habit:** a static site doesn't need a SPA framework, a script doesn't need a server, and a team of one rarely needs microservices or Kubernetes.
+- **Record the choice** in an ADR (`docs/adr/0001-stack.md`): the options, the choice, the reasons.
+- **Set up and verify the dev environment before writing code:** install or confirm the toolchain, pin versions in the repo (`.nvmrc`, `.python-version`, `rust-toolchain.toml`, `global.json`, `.tool-versions`), and run the platform's own check where one exists (`flutter doctor`, `npx expo-doctor`, `dotnet --info`, `go env`).
+
+Details: `references/build/choosing-a-stack.md`.
+
+## 4. Design (projects)
+
+- **Sketch the architecture first:** the parts (clients, services, databases, queues, third-party APIs), how data flows between them, and where the trust boundaries are.
+- **Offer 2-3 approaches as options** and prefer the simplest that meets the goal. Make "done" concrete with mockups, example inputs and outputs, sample API calls or a receipt layout. For tricky business rules (returns, debts, discounts, stock, permissions), a clickable one-file prototype beats any description.
 - **MVP = one user job done well,** aimed at the riskiest assumption, with later phases listed but not built.
-- **For projects, nothing is scaffolded, installed or coded until a written design is approved** (`docs/specs/YYYY-MM-DD-<topic>-design.md`). "Sounds good" to an idea in chat is not approval of a design nobody wrote down.
+- **For projects, nothing is scaffolded, installed or coded until a written design is approved** (`docs/specs/YYYY-MM-DD-<topic>-design.md`). "Sounds good" to an idea in chat is not approval of a design nobody wrote down. Pre-mortem the design before asking for that approval.
 - **Client work:** approvals in writing, a Not Doing list, and trade-offs explained in plain words. These are what you point to when scope creeps.
 
-Details: `references/build/planning.md` §1-6.
+Details: `references/build/planning.md` §1-3.
 
-## 4. Plan (projects)
+## 5. Plan (projects)
 
 - **Write the plan to a file** (`docs/plans/YYYY-MM-DD-<feature>.md`) so it survives context resets.
-- **Slice vertically.** The first slice is a tracer bullet: the thinnest path through every layer (DB → logic → UI → test). Risky pieces go first: sync, payment callbacks, Arabic-script printing.
+- **Slice vertically.** The first slice is a tracer bullet: the thinnest path through every layer (storage → logic → interface → test). Risky pieces go first: sync, payment callbacks, hardware integration, the slowest query.
 - **Every task names:**
   - the files and interfaces
   - the failing test, with literal values
@@ -218,111 +311,117 @@ Details: `references/build/planning.md` §1-6.
   - the commit message
 
   "Add error handling" is not a task; say which errors.
-- **Execution:** a checkpoint every 2-3 tasks, and a short ledger of finished tasks and the small calls you made. Inside an approved plan, don't ask "should I continue?". Stop only for destructive steps, security-sensitive changes the plan didn't spell out, anything outside the branch, or a plan that turns out broken.
+- **Execution:** a checkpoint every 2-3 tasks, and a short ledger of finished tasks and the small calls you made. Inside an approved plan, don't ask "should I continue?". Stop only for destructive steps, security-sensitive changes the plan didn't spell out, a decision that belongs to the user, anything outside the branch, or a plan that turns out broken.
 
-Details: `references/build/planning.md` §6-8.
+Details: `references/build/planning.md` §3-5.
 
-## 5. Stack, data model, architecture
+## 6. Data model and architecture
 
-- **Default to a popular, well-documented stack.** Per-project defaults are in `references/build/architecture-and-data.md` §1.
-- **Sketch the data model before the UI:** entities, relationships, ownership, persistence. Get the types right from the start:
-  - money as integers or `numeric`
-  - server timestamps
-  - numbers as numbers
+- **Sketch the data model before the interface:** entities, relationships, ownership, persistence. Get the types right from the start:
+  - money as integers or decimals
+  - server-written UTC timestamps
+  - numbers as numbers, enums as enums
   - constraints and indexes in the database
-- **Deep modules,** organized by feature. Domain logic (money, stock, discounts, sync) lives in pure functions with no UI or network imports.
+- **Deep modules,** organized by feature. Domain logic (money, stock, permissions, sync) lives in pure functions with no UI, network or database imports.
 - **Contracts first:** typed inputs and outputs, one error shape, validation at boundaries, pagination from day one.
 - **Never swallow errors,** and make every write safely retryable (client-generated IDs, idempotency keys).
 - **Standards set early stick,** so review the first few files carefully. Left alone, AI appends; schedule refactor passes that split big files, delete dead code and merge duplicate helpers.
 
-## 6. Guardrails on day one
+Details: `references/build/architecture-and-data.md`.
+
+## 7. Guardrails on day one
 
 Scale them to what you're building:
 - A new repository that will live on (a client app, anything that will get a remote) gets the full list below.
-- A prototype or a standalone module gets git, `.gitignore`, strict types and tests. Add hooks, CI and Dependabot when it gets a remote or a second contributor.
+- A prototype, script or standalone module gets git, `.gitignore`, the strictest practical type checking and tests. Add hooks, CI and dependency bots when it gets a remote or a second contributor.
 - Inside an existing project, use its tooling rather than adding new tools.
 
-The full list:
-- `.gitignore` written **first** (`.env*`, build output, keystores, `key.properties`, service-account JSON). Also `.gitattributes`, `.env.example` and committed lockfiles.
-- Strict types, linter and formatter (settings in `references/build/git-and-tooling.md` §1).
+The full list (the tools for each language are in `references/build/git-and-tooling.md` §1):
+- `.gitignore` written **first** (`.env*`, build output, keystores and signing files, service-account JSON, local databases). Also `.gitattributes`, `.env.example`, pinned toolchain versions and committed lockfiles.
+- Strict types or compiler warnings as errors where the language has them, a linter and a formatter.
 - A test runner with one passing test.
 - Fast pre-commit hooks: format, lint and secret scan on staged files.
 - CI on every push and PR, required before merging.
-- **The guard hook** is a one-time install in the user's Claude Code settings. Check whether it's there; if not, offer it once. On GitHub, branch protection with "do not allow bypassing" (admins bypass by default; private repos need a paid plan).
-- One command per check (lint, typecheck, test, test-one, build, dev), recorded in the context file.
+- A release cooldown for dependencies, and Dependabot or Renovate with a cooldown of its own.
+- **The guard hook and secret deny rules** are a one-time install in the user's Claude Code settings. Check whether they're there; if not, offer them once. On GitHub, branch protection with "do not allow bypassing" (admins bypass by default; private repos need a paid plan).
+- One command per check (lint, typecheck, test, test-one, build, run), recorded in the context file.
 
-## 7. Living context file
+## 8. Living context file
 
-Keep `CLAUDE.md` (or equivalent) with what can't be looked up elsewhere:
+Keep `CLAUDE.md` (or `AGENTS.md`, or both) with what can't be looked up elsewhere:
 - the exact commands
 - conventions and things not to do
-- gotchas and decisions, each with its reason
-- pointers to the spec, plan and ADRs
+- gotchas, each with its reason
+- pointers to the spec, plan, decision log and ADRs
 - removed features that must not come back
 
-Don't restate `package.json` or `pubspec.yaml`, because copies go stale. When you're told the same thing twice, add it. Update the file after any session that produced a correction, and read it first in every new session. After a rough session, ask which mistake a lint rule, hook or test could have caught, and add that check.
+Don't restate the manifest (`package.json`, `pyproject.toml`, `go.mod`, `pubspec.yaml`), because copies go stale. When you're told the same thing twice, add it. Update the file after any session that produced a correction, and read it first in every new session. After a rough session, ask which mistake a lint rule, hook or test could have caught, and add that check.
 
-## 8. Context hygiene and subagents
+## 9. Context hygiene and subagents
 
-- **If a problem survives ~3 attempts, stop iterating blindly.** Summarize what was tried and consider a fresh session.
-- **Compact or reset at task boundaries,** never mid-implementation. Before ending a session, write a handoff: decisions, task status, files changed, verification commands and results, open questions.
-- **Subagents get a full brief:** the task with exact values, interfaces from earlier tasks, your rulings, and the reply format. Never hand over the whole session history.
+- **Compact or reset at task boundaries,** never mid-implementation. Before ending a session, write a handoff: decisions (and the log entries), task status, files changed, verification commands and results, open questions.
+- **Subagents get a full brief:** the task with exact values, interfaces from earlier tasks, the decisions already made, and the reply format. Never hand over the whole session history, and never let a subagent make a decision that belongs to the user.
   - Run them in parallel only on independent problems, each in its own worktree if they write code.
   - For risky work, add a reviewer subagent that checks the diff against the brief.
   - Verify what subagents claim before passing it on.
 
-Details: `references/build/planning.md` §8.
+Details: `references/build/planning.md` §5.
 
-## 9. Build test-first, in small slices
+## 10. Build test-first, in small slices
 
 AI-generated code is implementation-first with little testing, so testing has to be a forced step.
 - **Red → green → refactor:**
   1. Write one test for one behaviour.
-  2. Watch it **fail for the right reason** (the assertion, not an import error).
+  2. Watch it **fail for the right reason** (the assertion, not an import or compile error).
   3. Write the least code that passes.
   4. Refactor on green, as its own commit.
 - **Every bug starts as a failing test** that reproduces it.
 - **Expected values come from an independent source,** never recomputed with the code's own logic.
-- **Mock only what you don't own** (payment gateways, SMS, printers). For your own stack, use real local stand-ins: in-memory SQLite, the Firebase emulator, local Supabase.
-- **Test the paths that hurt:** money, stock, sync, auth, migrations, and failures (offline, timeout, 500, double tap). E2E only for critical journeys, with no fixed sleeps.
+- **Mock only what you don't own** (payment gateways, SMS, email, printers). For your own stack, use real local stand-ins: an in-memory or containerized database, the platform's emulators, a local server.
+- **Test the paths that hurt:** money, permissions, sync, migrations, concurrency, and failures (offline, timeout, 500, double submit, bad input). E2E only for critical journeys, with no fixed sleeps.
 
 Details: `references/build/testing.md`.
 
-## 10. Debugging
+## 11. Debugging
 
-- **Reproduce first** with a fast, deterministic loop (a failing test, a curl script, a replayed payload). Ask for raw error text, not paraphrases.
-- **Check what changed** (`git diff`, recent commits, env vars). `NEXT_PUBLIC_`/`VITE_`/`EXPO_PUBLIC_` values are baked in at build time.
-- **Form 3-5 ranked hypotheses** with predictions and test one variable at a time. Use tagged temporary logs at boundaries, and drive the real app for UI bugs. If the code used to work, run `git bisect run`.
-- **Fix the source, not the symptom.** Add the regression test, remove the debug logs, and explain to the user what actually went wrong.
+- **Reproduce first** with a fast, deterministic loop (a failing test, a curl script, a replayed payload, a CLI call). Ask for raw error text, not paraphrases.
+- **Check what changed:** `git diff`, recent commits, dependency updates, env vars and config. Values baked in at build time (web build variables, mobile build defines) need a rebuild, not a restart.
+- **Form 3-5 ranked hypotheses** with predictions and test one variable at a time. Use tagged temporary logs at boundaries, and drive the real program for UI bugs. If the code used to work, run `git bisect run`.
+- **Fix the source, not the symptom.** When the fix itself is a real choice (a workaround now or a redesign, a patch or a migration), offer it as options.
+- **Close with a short report:** what was wrong, the root cause, the fix, the regression test, and what prevents it next time. Remove the debug logs.
 - **If a third fix fails,** or each fix exposes new coupling, stop patching and discuss the design.
 
 Details: `references/build/debugging.md`.
 
-## 11. Review and refactor
+## 12. Review and refactor
 
-- **Before presenting work, review your own diff as a stranger would:**
-  - Does it do what was asked, and nothing extra?
-  - Are there tests?
-  - Any swallowed errors, hardcoded values or debug leftovers?
-  - Is it the simplest version?
-- **For risky changes, review on two axes,** ideally in fresh-context subagents or with `/review`: does it meet the spec, and is the code sound?
+- **Before presenting work, review your own diff as a stranger would,** on five axes:
+  - **Correctness:** does it do what was asked, and nothing extra, including the edge and failure cases? Are there tests?
+  - **Simplicity:** is it the simplest version? Does every abstraction earn its place?
+  - **Architecture:** does it follow the project's patterns and keep logic in the layer that owns it?
+  - **Security:** input, auth, ownership, secrets, the data it returns.
+  - **Performance:** queries in loops, unbounded lists, work that runs on every render or request.
+- **Keep changes reviewable:** about 100-300 changed lines; split larger ones. Approve a change when it clearly improves the code's health, not only when it's perfect.
+- **For risky changes, review in fresh-context subagents or with `/review`:** does it meet the spec, and is the code sound?
 - **Receiving review:** verify each point against the code, push back with evidence when it's wrong for this codebase, and fix one item at a time with a test.
 - **Refactor only on green,** in commits that change no behaviour. Before handing code over, strip AI tells (narrating comments, generic names, over-engineering) with `/simplify` or `unslop-code`.
 
-## 12. Shipping
+## 13. Ship and maintain
 
 Running locally isn't done:
-- **Preview first;** production only when the user asks. Keep dev and prod as separate projects, with sandbox payment credentials outside production.
-- **Crash reporting** (Crashlytics on mobile, Sentry on web and Windows), proven with a test crash. Logs carry no secrets or personal data.
+- **Preview or staging first;** production only when the user asks. Keep dev and prod as separate projects and databases, with sandbox payment credentials outside production.
+- **The deploy target fits the project:** static hosting, a platform service, containers, serverless, app stores, desktop installers, package registries or firmware updates (`references/build/shipping.md` §2-3).
+- **Observability:** crash and error reporting proven with a test error, structured logs with no secrets or personal data, health checks and alerts for services.
 - **A rollback plan,** risky features behind flags whose default is safe, and backups restored at least once.
-- **Mobile releases:** a backed-up upload key, increasing build numbers, archived symbols, and a staged rollout.
-- **The launch checklist** (`references/build/shipping.md` §7), a README with setup and env vars, and an Audit-mode run on the release candidate.
+- **Releases:** semantic versions or increasing build numbers, release notes, and signing keys backed up where the team can find them.
+- **Before launch:** a pre-mortem, the launch checklist (`references/build/shipping.md` §7), a README with setup, run, test and deploy steps, and an Audit-mode run on the release candidate.
+- **Afterwards:** scheduled dependency updates, monitoring someone actually reads, and for client work a handoff note: which accounts the client owns, how to deploy, where the secrets live.
 
-Code exported from an app builder (v0, Lovable, Bolt, Replit) gets the §6 guardrails and an audit before anyone builds on it.
+Code exported from an app builder (v0, Lovable, Bolt, Replit, Firebase Studio) gets the §7 guardrails and an audit before anyone builds on it.
 
 # Audit workflow
 
-Audit the app the way a senior engineer would if hired to find every way it leaks data, loses money, falls over in production or embarrasses its owner. Be paranoid: comments, function names and README claims prove nothing until the code path confirms them. But report only what you can show. Look hardest at what a demo can't show: access rules, ownership checks, webhook signatures, atomic writes, error handling, migrations, RTL, real tests.
+Audit the code the way a senior engineer would if hired to find every way it leaks data, loses money, falls over in production or embarrasses its owner. Be paranoid: comments, function names and README claims prove nothing until the code path confirms them. But report only what you can show. Look hardest at what a demo can't show: access rules, ownership checks, webhook signatures, atomic writes, error handling, migrations, localization, real tests.
 
 ## Ground rules
 
@@ -331,80 +430,29 @@ Audit the app the way a senior engineer would if hired to find every way it leak
   - No requests against production, no trying a found credential, no brute forcing.
   - TruffleHog verifies keys with the provider by default, so always add `--no-verification`; gitleaks never verifies.
 - **Builds and tests run project code, so they are not read-only:**
-  - Check dependency names for typosquats first, and list install scripts without installing (`grep -n '"hasInstallScript": true' package-lock.json`).
-  - If tests or the build use the live Firebase, Supabase or payment project and no emulator or local stack exists, skip them and list them under "couldn't check".
-  - Install only if `node_modules` is missing, with `npm ci --ignore-scripts`. For Flutter, use `flutter pub get --enforce-lockfile`.
+  - Check dependency names for typosquats first, and list install-time scripts without running them (`grep -n '"hasInstallScript": true' package-lock.json`, `setup.py`, `build.rs`, Gradle plugins).
+  - If tests or the build use a live database, backend or payment account and no emulator or local stack exists, skip them and list them under "couldn't check".
+  - Install only when dependencies are missing, from the lockfile, with install scripts off where the tool allows: `npm ci --ignore-scripts`, `uv sync --frozen`, `flutter pub get --enforce-lockfile`, `composer install --no-scripts`, `bundle install --frozen`, `cargo fetch --locked`, `dotnet restore --locked-mode`, `go mod download`.
 - **Mask secrets everywhere you write.** Show only the prefix that names the key type, plus the length (`sk_live_…(107 chars)`, `sb_secret_…`, `AKIA…`). Passwords, PINs and values with no known prefix get no characters: `storePassword=…(10 chars)`.
 - **Evidence or it didn't happen.**
   - Every finding needs file:line and the path you followed: who can reach it, what it touches, what stops them.
-  - What needs a console you can't see (deployed Firebase rules, Supabase dashboard, gateway webhook config) is reported as "needs confirmation in <place>".
+  - What needs a console you can't see (deployed database rules, a cloud dashboard, a gateway's webhook config) is reported as "needs confirmation in <place>".
 - **Don't stop at the first hit.** One leaked key usually means three; one endpoint missing an ownership check usually means all of them.
 - **Don't grade your own work.** If this session built the code, run the audit in a fresh session or subagent that hasn't seen the build, and say which you did.
 
 ## Steps
 
-1. **Scope.** What the app does, who uses it, and what's worth stealing or breaking: personal data, money, stock, accounts, the sending domain, the paid API bill. Note the stack, deployment and distribution (web, APK, store, desktop). Default to a full audit. If the user names one area, audit it with the same rigor and report format.
+Read `references/audit/workflow.md` before step 2: it has each stack's commands, the attack-surface checklist, the severity scale and the report format.
 
-2. **Automated sweep.** Run the lead finder with the Bash tool (Git Bash on Windows; from PowerShell, a plain `bash` may start WSL). Strip Windows line endings first: a copy saved with CRLF fails at once with `$'\r': command not found`.
+1. **Scope.** What the software does, who uses it, and what's worth stealing or breaking: personal data, money, stock, accounts, the sending domain, the paid API bill, the devices it controls. Note the languages, frameworks, deployment and distribution (web, store, installer, package, firmware). Default to a full audit. If the user names one area, audit it with the same rigor and report format.
+2. **Automated sweep.** Run the lead finder, then the project's own checks for each language present (workflow §1). Strip Windows line endings first, or a CRLF copy fails with `$'\r': command not found`:
    ```bash
    tr -d '\r' < <this-skill-dir>/scripts/scan.sh > /tmp/vibe-scan.sh && bash /tmp/vibe-scan.sh <repo>   # leads only; masks secrets; read-only
    ```
-   Then run the project's own checks, with the precautions above, and note what's missing:
-
-   | Stack | Commands |
-   |---|---|
-   | Node/Next/Expo | `npx tsc --noEmit`, `npm run lint`, `npm audit --omit=dev`; `npm test` and `npm run build` only against an emulator or local stack. For Next.js, compare the lockfile's `next` version with the newest security release (`references/audit/security.md` §10) |
-   | Flutter | `flutter analyze`, `flutter test`, `osv-scanner` on `pubspec.lock` |
-   | Python | `pip-audit -r requirements.txt`, `ruff check`, `pytest` |
-   | Supabase | `supabase db advisors --remote --type security`, if the CLI is linked and the user agrees (CLI 2.81+; without `--remote` it checks the local database) |
-   | Secrets | `gitleaks git -v --redact --no-banner .` if installed |
-
    A failing build, type check or test run is itself a finding. Don't install global tools without asking.
-
-3. **Map the attack surface.** List every entry point and who can reach it:
-   - routes and Cloud/Edge Functions
-   - Server Actions (each `'use server'` export is a public POST endpoint)
-   - RPC-callable database functions
-   - Firestore/RTDB/Storage rules; Supabase tables, policies, views, buckets
-   - webhooks, cron jobs, admin tools
-   - everything shipped to clients (treat it as public)
-   - paid APIs and who can trigger them
-
-4. **Security pass (deep)** with `references/audit/security.md`: secrets and history, backend rules, auth and ownership (IDOR), money and business logic, webhooks and payment callbacks (Stripe, ZainCash, FIB, FastPay, Qi Card), paid APIs and LLMs, injection and unsafe sinks, sessions/CORS/headers, mobile and desktop specifics, dependencies, logging.
-
-5. **Quality passes.** Walk **every line** of `references/audit/quality.md` against the code: correctness, data integrity, performance, UX/accessibility/RTL, tests and tooling, production readiness. Most lines take seconds, and skipped lines are where audits miss things. Trace deeply only where the app's purpose makes an area critical, like money and stock in a POS or personal data in a pharmacy. Trace at least one critical flow end to end, client to server and back.
-
+3. **Map the attack surface:** every entry point and who can reach it, including framework RPC, webhooks, jobs, database rules and everything shipped to clients (workflow §2).
+4. **Security pass (deep)** with `references/audit/security.md`: secrets and history, auth and ownership (IDOR), access rules, money and business logic, webhooks and payment callbacks, paid APIs and LLMs, injection and unsafe sinks for every language present, sessions/CORS/headers, platform specifics (web, mobile, desktop), dependencies and supply chain, logging and privacy, and containers, CI, infrastructure and other kinds of software.
+5. **Quality passes.** Walk **every line** of `references/audit/quality.md` against the code: correctness, data integrity, performance, UX/accessibility/localization, tests and tooling, production readiness. Most lines take seconds, and skipped lines are where audits miss things. Trace deeply only where the software's purpose makes an area critical, like money and stock in a POS or personal data in a clinic app. Trace at least one critical flow end to end, client to server and back.
 6. **Confirm, merge, prune.** Trace every lead to a real path, merge findings with one root cause, and drop what you can't support. List what you ruled out, one line each.
-
-7. **Report** in the format below.
-
-## Severity
-
-Judge by impact times who can trigger it, then sort worst-first.
-
-| Level | Meaning | Typical examples |
-|---|---|---|
-| **Critical** | Anyone, or any self-registered user, can read others' data, take or skip payment, run up bills, take over accounts or destroy data, right now. Also: the app silently loses or corrupts sales, stock or money records in normal use | Service-role or live payment key exposed; rules open to all; unverified payment callback; client-set prices; admin action with no auth; stock oversold across tills; migrations that never run on existing installs |
-| **High** | Serious harm needing a little effort or a specific condition | IDOR on orders; SSRF; stored XSS (Critical where staff view it); brute-forceable OTP; keystore passwords committed (Critical if the repo is public) |
-| **Medium** | Real weakness or bug with limited blast radius | Token in plain storage; stack traces to clients; unbounded queries; swallowed errors outside money paths; forced LTR |
-| **Low** | Hardening, hygiene, polish | Missing headers; index keys; missing `.env.example`; minor a11y gaps |
-
-## Report format
-
-- **Verdict first,** in one line: **Blocked** / **Risky: internal or pilot only** / **Launchable with caveats** / **Ready**, plus the findings that decide it. Any Critical means Blocked; the other caps are in `references/audit/quality.md` §8. Then say what was audited (stack, commit or date, scope) and what couldn't be checked.
-- **In plain words,** for the owner: 3-5 sentences without jargon. What a stranger, a customer or a cashier could do today, what it could cost, and roughly how long the top fixes take.
-- **Scorecard:** one row each for Security, Correctness & data, Performance, UX/a11y/RTL, Tests & tooling and Production readiness, rated **OK**, **Issues** or **Blocking** with a short reason.
-- **Findings,** worst-first. Keep cells short: no code blocks, and no `||` rule snippets, which break tables.
-
-  | # | Severity | Area | File:line | Problem | Exploit or failure scenario | Fix (one line, effort S/M/L) |
-  |---|---|---|---|---|---|---|
-
-  - Then a numbered **Details** block for each Critical and High row: the full scenario, the exact fix and the code that won't fit in a cell.
-  - Be specific: "`STRIPE_SECRET_KEY` hardcoded at `src/lib/stripe.ts:4`", not "exposed API key".
-  - Every fix names the actual change; a leaked key's fix starts with "rotate".
-  - Use one row per root cause, and include every confirmed finding, Lows too (group them by area if there are many).
-- **Top 3 to fix today:** the highest-leverage fixes, not always the three worst rows.
-- **Checked and fine:** notable areas verified clean.
-- **Evidence:** the commands run and their results, the evidence still missing, and one concrete next action.
-
-If the user asked about one area only, keep the same table, the Top 3 and the "couldn't check" line, scoped to that area. After the report, offer to fix the findings in Build mode, starting with the Top 3: reproduce with a failing test, fix, re-run the checks, and re-audit the touched paths.
+7. **Report** (workflow §3-4), about 1,000 words for a small codebase: the verdict first in one or two plain sentences (**Blocked** / **Risky: internal or pilot only** / **Launchable with caveats** / **Ready**; any Critical means Blocked), what was audited and what couldn't be checked in a line, the findings table worst-first (one short row per root cause, with file:line, scenario and fix), short details for Critical findings only, the Top 3 to fix today, and a few bullets of checked-and-fine and evidence. Count the words before sending. More detail on any finding when the user asks, or in a file if they want the full report.
+8. **Offer the fixes as decisions** (workflow §5): the Top 3 first, with options where a finding has more than one reasonable fix. Fixing is Build mode: reproduce with a failing test, fix, re-run the checks, and re-audit the touched paths.
