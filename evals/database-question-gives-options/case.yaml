@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: database-question-gives-options
+expected_outcome: |
+  A decision question answered as options: 2 to 4 realistic databases or
+  database services, each with what it gives and what it costs or limits,
+  one recommended for this store's size and the user's JavaScript skills, a
+  note on running cost or when to revisit the choice as the store grows, and
+  plain words a beginner can follow.

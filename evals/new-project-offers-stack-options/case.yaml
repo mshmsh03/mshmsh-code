@@ -1,0 +1,10 @@
+schema_version: "1.1"
+name: new-project-offers-stack-options
+expected_outcome: |
+  The agent treats this as a project, not a quick task. Before writing any
+  application code it asks about the needs that change the design (who uses it,
+  which devices, whether it must work without internet, languages such as
+  Kurdish or Arabic, budget), and it presents the first big decision (the stack)
+  as 2 to 4 real options with trade-offs and costs, one of them recommended with
+  a reason tied to the pharmacy's needs. With no question tool available it uses
+  lettered options in text and waits for the answer.
