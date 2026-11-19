@@ -7,4 +7,6 @@ expected_outcome: |
   Kurdish or Arabic, budget), and it presents the first big decision (the stack)
   as 2 to 4 real options with trade-offs and costs, one of them recommended with
   a reason tied to the pharmacy's needs. With no question tool available it uses
-  lettered options in text and waits for the answer.
+  lettered options in text and waits for the answer. The first round stays short
+  (about five questions; the rest as stated defaults or later rounds), and
+  questions for the pharmacist are in plain words, tied to real moments.

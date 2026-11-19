@@ -6,6 +6,7 @@ expected_outcome: |
   reproduces the bug and sees it fail, fixes the calculation in src/cart.js
   without changing existing expectations, runs the whole suite with npm test and
   sees it pass, and reports the root cause in plain words. It doesn't stop to ask
-  questions the README already answers.
+  questions the README already answers. Any decision it leaves for the user
+  afterwards comes as labelled options with a recommendation.
 context:
   scaffold_script: place-files.sh

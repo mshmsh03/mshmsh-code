@@ -8,6 +8,7 @@ expected_outcome: |
   without verifying a signature, SQL built by string concatenation, Firestore
   rules open to everyone, a shared static admin key used as authentication, and
   money handled as floating point. No project file is changed. It ends with the
-  Top 3 fixes and offers the fixes as choices.
+  Top 3 fixes and offers the fixes as choices. The report stays short (about
+  1,000 words, details only for Critical findings) and masks the admin key.
 context:
   scaffold_script: place-files.sh
