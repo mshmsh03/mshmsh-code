@@ -1,6 +1,21 @@
 # Security pass: checks, detection, severity
 
-The deep half of the audit. Work through the sections that match the stack you detected (Firebase: `firebase.json`, `*.rules`, `firebase_options.dart`, `google-services.json`; Supabase: `supabase/`; Expo: `app.json`/`app.config.*`/`eas.json`; Next: `next.config.*`; Netlify: `netlify.toml`/`_headers`; Stripe in dependencies). Detection lines are starting points: open the code and confirm before reporting.
+The deep half of the audit, for any language. Sections 1, 4-9, 13 and 14 apply to every codebase; work through the others when their stack is present. Detect the stack from its files:
+
+| Stack | Files that give it away |
+|---|---|
+| Firebase / Supabase | `firebase.json`, `*.rules`, `firebase_options.dart`, `google-services.json` / `supabase/`, `supabase/config.toml` |
+| Next.js / other JS frameworks | `next.config.*`, `nuxt.config.*`, `svelte.config.*`, `angular.json`, `vite.config.*` |
+| Expo / React Native, Flutter, native mobile | `app.json`, `app.config.*`, `eas.json` / `pubspec.yaml` / `AndroidManifest.xml`, `Info.plist`, `*.xcodeproj` |
+| Python web | `manage.py`, `settings.py` (Django); `app.py` or `main.py` importing FastAPI or Flask |
+| Ruby, PHP | `Gemfile`, `config/routes.rb` (Rails) / `composer.json`, `artisan`, `routes/` (Laravel) |
+| Java/Kotlin, .NET | `pom.xml`, `build.gradle*`, `application.yml` (Spring) / `*.csproj`, `Program.cs`, `appsettings*.json` |
+| Go, Rust | `go.mod` / `Cargo.toml` |
+| Desktop | `electron` in `package.json`, `tauri.conf.json`, `*.csproj` with WPF/WinUI, `CMakeLists.txt` with Qt |
+| Infrastructure and delivery | `Dockerfile`, `docker-compose.yml`, `*.tf`, `Pulumi.yaml`, Kubernetes manifests, `.github/workflows/`, `netlify.toml`, `_headers`, `vercel.json` |
+| Payments | Stripe or local gateway SDKs in dependencies, webhook routes |
+
+Detection lines are starting points: open the code and confirm before reporting.
 
 **Rank by reachability:** anyone, with no account > anyone who can sign up (the public Firebase API key allows that even without a sign-up screen) > an existing customer or staff account > an admin, or someone holding the device or the repo > unconfirmed (label it "unverified"). Impact (other users' data, money, whole shops) sets the severity within each rung.
 
@@ -20,6 +35,7 @@ The deep half of the audit. Work through the sections that match the stack you d
 13. Dependencies, supply chain, MCP
 14. Logging, exposure and privacy
 15. What the repo can't show
+16. Containers, CI, infrastructure and other kinds of software
 
 ---
 
@@ -36,9 +52,11 @@ The deep half of the audit. Work through the sections that match the stack you d
     ```
     Then `git show <sha> --stat`, and mask any value you quote.
 - **Tracked env files:** `git ls-files | grep -iE '(^|/)\.env'`. `.env.example` may hold placeholders only.
+- **Framework secrets in config files:** Django `SECRET_KEY` in `settings.py`, Rails `config/master.key` (the key that decrypts `credentials.yml.enc`), Laravel `APP_KEY`, connection strings with passwords in `appsettings*.json` or `application.properties`/`application.yml`, JWT signing secrets hardcoded as literals. **High**, Critical if the repo is public.
+- **Secrets outside source files:** `terraform.tfstate` (holds resource secrets in plain text), Jupyter notebook outputs, Dockerfile `ENV`/`ARG` values, CI workflow files, `docker-compose.yml`, Kubernetes manifests with `kind: Secret` (base64 is not encryption), and log or dump files committed by accident.
 - **Setup docs that leak by instruction:** a README or setup guide that tells developers to put server keys (service role, Resend, Stripe secret) in the *app's* `.env`, next to client-exposed variables. That's one `extra:` or prefix away from shipping. **Low-Medium.**
 - **Service-account keys** have varied names; grep file *contents* for `"type": "service_account"` and `BEGIN PRIVATE KEY`, including under `assets/`. **Critical.**
-- **Client-exposed prefixes ship to every visitor:** `NEXT_PUBLIC_`, `VITE_`, `REACT_APP_`, `EXPO_PUBLIC_`. A secret behind one of them is public. **Critical** for OpenAI/Anthropic/Gemini, Stripe secret, Resend/SendGrid/Twilio, the Supabase service role and DB URLs.
+- **Client-exposed values ship to every user:** web build prefixes (`NEXT_PUBLIC_`, `VITE_`, `REACT_APP_`, `EXPO_PUBLIC_`, Nuxt `runtimeConfig.public`, SvelteKit `$env/*/public`), mobile build configs, desktop app bundles. A secret behind one of them is public. **Critical** for OpenAI/Anthropic/Gemini, Stripe secret, Resend/SendGrid/Twilio, the Supabase service role and DB URLs.
 - **Not a leak:** the Firebase config `apiKey` (in `firebase_options.dart`, `google-services.json`, the web config) is an identifier; its safety depends on the rules. Don't report it as a leaked secret. Do suggest API-key restrictions in Google Cloud. Watch for the reverse mistake: a Gemini or Maps *server* key also starts with `AIza`, and that one is a billable leak. Check which API the key is used with.
 - **Fix wording:** "Rotate the key now, then remove it from the code and history." A key that reached a remote is burned; history rewriting can't reach clones, forks or caches. Never write "delete the file" as the whole fix.
 
@@ -149,11 +167,12 @@ The publishable key (`sb_publishable_…`, or the legacy anon JWT) is public by 
 
 ## 4. Authentication and authorization (all stacks)
 
-- **Inventory every entry point** (routes, functions, callables, RPC functions, Server Actions, admin tools) and fill in for each: who can call it, what it reads and writes, what check stops a stranger. An endpoint missing from the inventory is an endpoint you didn't check.
-- **Object-level authorization (IDOR/BOLA):** any lookup by an ID from params, query or body must also be scoped to the caller or tenant (`where: { id, userId: session.user.id }`, `.eq('id', id).eq('user_id', uid)`, or rules/RLS you've confirmed). Grep `params\.id|searchParams\.get\(|req\.(params|query|body)\.\w*[iI]d\b|\.doc\(` and read the query that follows. **High-Critical.**
+- **Inventory every entry point** (routes, controllers, functions, callables, RPC functions, Server Actions, GraphQL resolvers, queue consumers, admin tools) and fill in for each: who can call it, what it reads and writes, what check stops a stranger. An endpoint missing from the inventory is an endpoint you didn't check (`workflow.md` §2).
+- **Framework defaults that open endpoints:** Django REST Framework views with `AllowAny` (or no global `DEFAULT_PERMISSION_CLASSES`), missing `@login_required`/`LoginRequiredMixin`; Rails controllers with `skip_before_action :authenticate_user!`; Laravel routes outside the `auth` middleware group; Spring Security `permitAll()` or `csrf().disable()` on broad matchers; ASP.NET `[AllowAnonymous]` or no fallback authorization policy; Express or Fastify routes registered before the auth middleware; Go handlers not wrapped by the auth middleware. **High-Critical** depending on what they expose.
+- **Object-level authorization (IDOR/BOLA):** any lookup by an ID from params, query or body must also be scoped to the caller or tenant (`where: { id, userId: session.user.id }`, `.eq('id', id).eq('user_id', uid)`, `current_user.orders.find(id)`, `get_object_or_404(..., owner=request.user)`, or rules/RLS you've confirmed). Grep `params\.id|searchParams\.get\(|req\.(params|query|body)\.\w*[iI]d\b|\.doc\(|objects\.get\(|\.find\(params\[|findById\(|FindAsync\(` and read the query that follows. **High-Critical.**
   - Give the owner a two-account test: user B asks for user A's object in the emulator or staging. It's a leak only if B actually gets A's data; a 200 alone proves nothing.
 - **Function-level authorization:** admin routes, callables and RPCs need a role check from a trusted source (custom claims, `app_metadata`, a server-side table), never from the request body. **High.**
-- **Mass assignment:** `data: req.body`, `{...body}`, `Object.assign(row, body)`, or `.update/.insert/.set` called straight on the input lets users set `role`, `price` or `ownerId`. Validate against a schema, then copy only allowed fields. **High.**
+- **Mass assignment:** `data: req.body`, `{...body}`, `Object.assign(row, body)`, `.update/.insert/.set` called straight on the input, `Model(**request.data)`, `params.permit!`, Laravel models with `$guarded = []`, binding request bodies straight onto JPA or EF entities. Users can then set `role`, `price` or `ownerId`. Validate against a schema, then copy only allowed fields. **High.**
 - **ORM operator injection:** `findFirst({ where: req.body })` lets `{"email":{"contains":""}}` match every row. **High.**
 - **Over-exposure:** whole rows returned to clients (password hashes, reset tokens, admin flags, other users' phones). Use explicit `select`; in Next.js, mark data modules `server-only`. **Medium-High.**
 - **JWT handling:** `jwt.decode(` used for trust instead of `verify` with pinned algorithms, issuer, audience and expiry. **Critical.**
@@ -205,7 +224,10 @@ The publishable key (`sb_publishable_…`, or the legacy anon JWT) is public by 
 
 ## 8. Injection, XSS, SSRF, uploads, paths
 
-- **SQL built from strings:** JS template literals into `query()`, `$queryRawUnsafe`/`$executeRawUnsafe`, Dart `rawQuery/rawInsert/execute` with `$var`. Use placeholders (`?` with `whereArgs`/arguments). **High** server-side. For local SQLite, **Medium**, rising if input comes from sync, import, QR or barcode scans.
+- **SQL built from strings:** JS template literals into `query()`, `$queryRawUnsafe`/`$executeRawUnsafe`; Python f-strings or `%` into `cursor.execute`, Django `.raw()`/`.extra()` with interpolation; Java `Statement` with `+`; C# `SqlCommand` with concatenation or `FromSqlRaw($"...")`; Go `fmt.Sprintf` into `db.Query`; PHP `mysqli_query`/`PDO::query` with concatenation; Ruby `where("name = '#{...}'")`; Dart `rawQuery/rawInsert/execute` with `$var`. Use placeholders. **High** server-side. For local SQLite, **Medium**, rising if input comes from sync, import, QR or barcode scans.
+- **Unsafe deserialization and code execution:** Python `pickle.loads`, `yaml.load` without `SafeLoader`, `eval`/`exec`; Java `ObjectInputStream`, unsafe Jackson polymorphic typing, XStream; .NET `BinaryFormatter`, `TypeNameHandling.All`; PHP `unserialize`, `include`/`require` with user input; Ruby `Marshal.load`, `YAML.load` on untrusted data, `send`/`constantize` with user input; JS prototype pollution through deep-merge helpers on request bodies. **Critical** on untrusted input.
+- **Template injection:** user input rendered *as* a template (`render_template_string(user_input)`, Twig or Freemarker templates built from strings). **Critical.**
+- **XXE:** XML parsers with external entities or DTDs enabled on uploaded or posted XML. **High.**
 - **XSS sinks:**
   - `dangerouslySetInnerHTML`, `.innerHTML =`, `insertAdjacentHTML`, `document.write`
   - `eval(`, `new Function(`
@@ -229,12 +251,14 @@ The publishable key (`sb_publishable_…`, or the legacy anon JWT) is public by 
 
   **Medium-High.**
 - **Path traversal:** `path.join(dir, input)` passed to `readFile/unlink/createReadStream/sendFile`. Resolve with `realpath` first, then require the path to be under an allowlisted root and owned by the caller. **High.**
-- **Shell:** `exec(`, `execSync(` or `spawn(..., { shell: true })` with input in the command. **Critical.**
+- **Shell:** input inside a command string: Node `exec(`, `execSync(`, `spawn(..., { shell: true })`; Python `os.system`, `subprocess` with `shell=True`; Java `Runtime.exec(String)`; C# `Process.Start("cmd", "/c " + input)`; Go `exec.Command("sh", "-c", ...)`; PHP `exec`/`system`/`shell_exec`/backticks; Ruby `system`/backticks with interpolation. **Critical.**
+- **HTML escaping turned off in server templates:** `|safe`, `mark_safe`, `{% autoescape off %}`, `raw`/`html_safe`, `{!! !!}`, `Html.Raw`, Go `text/template` used for HTML or `template.HTML(...)` on user input. **High.**
 
 ## 9. Sessions, cookies, CSRF, redirects, account flows
 
 - **Cookies:** `HttpOnly; Secure; SameSite=Lax` (Strict can break OAuth returns), with a bounded `Max-Age`. Flag `sameSite: 'none'` or missing flags in `cookies().set(`, `res.cookie(` and `Set-Cookie`. **Medium.**
 - **Tokens in `localStorage`** (`localStorage.setItem(...token...)`): **Medium**, High if any XSS exists.
+- **CSRF protection switched off:** Django `@csrf_exempt`, Rails `skip_forgery_protection`/`protect_from_forgery with: :null_session` on cookie sessions, Laravel `$except` lists in the CSRF middleware, Spring `csrf().disable()`, ASP.NET `[IgnoreAntiforgeryToken]`. **High** on cookie-authenticated state changes.
 - **CSRF** matters only for cookie-authenticated state changes. Bearer tokens (Firebase ID tokens) aren't sent automatically by the browser. Cookie auth needs SameSite plus a CSRF token or an Origin check. **Medium-High.** Next.js Server Actions already accept only POST and compare Origin with Host, so flag only a wide `serverActions.allowedOrigins`. Cookie-authenticated POST, PUT and DELETE handlers in `route.ts` need their own Origin check.
 - **CORS:** browsers refuse `*` together with credentials, so that combination can't happen. What matters:
   - a reflected origin (`origin: true`, echoing `req.headers.origin`, an unanchored regex) with `credentials: true`: **High**
@@ -283,6 +307,10 @@ The publishable key (`sb_publishable_…`, or the legacy anon JWT) is public by 
 - **Deep links** (intent filters, `CFBundleURLSchemes`, router configs): validate every parameter, never put tokens or access-granting IDs in links, and confirm before destructive actions. **Medium.**
 - **Biometric gates** that only flip a local boolean can be bypassed on rooted devices. If they protect server actions, the server must verify a signed challenge. **Low-Medium.**
 - **On-device SQLite is plaintext** and copyable from rooted phones or backups. For pharmacy or customer data, consider SQLCipher with the key in secure storage, and review `android:allowBackup`. **Medium.**
+- **Native Android:** exported activities, services, receivers or providers without permissions; WebViews with JavaScript enabled plus `addJavascriptInterface` on untrusted content; `MODE_WORLD_READABLE` files. **High.**
+- **Electron:** `contextIsolation: false`, `nodeIntegration: true`, `sandbox: false` or `webSecurity: false`; a preload that exposes `ipcRenderer` or `require` whole; IPC handlers that act without validating arguments or the sender; `shell.openExternal` with unvalidated URLs; remote content loaded in a window with Node access. **Critical** when remote or user content can reach a privileged window.
+- **Tauri:** broad capabilities (filesystem or shell access to all paths), commands that take paths or commands from the front end without validation, no CSP. **High.**
+- **Desktop updates and installers:** unsigned installers or update bundles, updates over HTTP, an updater that doesn't verify signatures. **High.**
 
 ## 12. Web headers and deployment
 
@@ -303,8 +331,9 @@ The publishable key (`sb_publishable_…`, or the legacy anon JWT) is public by 
 
 ## 13. Dependencies, supply chain, MCP
 
-- **Known vulnerabilities:** run the package manager's audit against the committed lockfile (`npm audit --omit=dev`, `pnpm audit`); `osv-scanner` covers `pubspec.lock` as well. Triage by reachability (runtime vs dev-only). Never run `npm audit fix --force` as part of an audit.
-- **Lockfiles:** no lockfile, two lockfiles in one folder, or CI running `npm install` instead of `npm ci` means installs aren't reproducible. **Medium.**
+- **Known vulnerabilities:** run the ecosystem's audit against the committed lockfile (`npm audit --omit=dev`, `pnpm audit`, `pip-audit`, `govulncheck ./...`, `cargo audit`, `dotnet list package --vulnerable --include-transitive`, `composer audit`, `bundle-audit`); `osv-scanner` covers most lockfiles, `pubspec.lock` included. Triage by reachability (runtime vs dev-only). Never run `npm audit fix --force` or any automatic upgrade as part of an audit.
+- **No release cooldown** for new dependency versions (`../build/security.md` §12) and no update bot: **Low**, a hygiene finding, raised to Medium for apps handling money or personal data.
+- **Lockfiles:** no lockfile for an application, two lockfiles in one folder, or CI installing without the lockfile (`npm install` instead of `npm ci`, `pip install -r` without hashes or a lock, `cargo build` without `--locked`) means installs aren't reproducible. **Medium.**
 - **Typosquats** (one character off a popular name), `postinstall` scripts in unfamiliar packages, and packages with tiny download counts doing security-relevant work.
 - **MCP and agent configs** (`.mcp.json`, `.cursor/`, `.vscode/`, `.windsurf/`): these run on the developer's machine, so rate them **Low-Medium** and keep them out of the launch verdict unless they run in CI or ship with the app.
   - A bare package name, `@latest` or any dist-tag is the riskier end.
@@ -332,4 +361,32 @@ Always list these under "couldn't check", with the place to confirm each:
 - Firebase console: sign-up providers, anonymous auth, App Check enforcement, API key restrictions, budgets
 - Stripe dashboard: webhook endpoints and signing secrets
 - Hosting env vars per deploy context
+- Cloud consoles: IAM roles, bucket and database exposure, firewall rules, secret-manager access
+- App store and signing settings: Play App Signing, App Store Connect roles, code-signing certificates
 - Logging and alerting (never visible from code)
+
+## 16. Containers, CI, infrastructure and other kinds of software
+
+**Containers:**
+- Images running as root (no `USER`), secrets in `ENV`/`ARG` or copied files (they stay in image layers), `latest` base images, `COPY . .` without a `.dockerignore` (ships `.env` and `.git`). **Medium-High.**
+- `docker-compose.yml` publishing databases on `0.0.0.0` with default passwords. **High** if the host is reachable.
+
+**CI/CD (`.github/workflows/` and others):**
+- `pull_request_target` or `workflow_run` combined with checking out and running PR code: secrets exposed to forks. **Critical.**
+- `${{ github.event.* }}` (titles, branch names, comments) interpolated directly into `run:` steps: command injection. **High.**
+- Third-party actions not pinned to a commit SHA, `permissions: write-all` or missing `permissions`, production secrets available to PR jobs. **Medium.**
+- Self-hosted runners on public repositories. **High.**
+
+**Infrastructure as code and cloud config:**
+- Public buckets, security groups or firewall rules open to `0.0.0.0/0` on database or admin ports, wildcard IAM policies (`"Action": "*"`), unencrypted databases or backups, `terraform.tfstate` committed. **High-Critical.**
+- Kubernetes: privileged containers, `hostPath` mounts, secrets in plain manifests, no resource limits, the default service account with broad permissions. **Medium-High.**
+
+**CLIs, scripts and bots:** secrets passed as flags or printed in logs, `shell=True`-style command building, scheduled jobs running with admin credentials, webhooks and chat bots without signature or sender checks (`../platforms/cli-scripts-automation.md`). **Medium-High.**
+
+**Data and ML:** notebooks committed with outputs containing personal data or keys, pipelines with credentials in code, models or datasets loaded from untrusted sources with `pickle` (including `torch.load` on untrusted files), LLM features without the guards in section 7. **Medium-Critical.**
+
+**Embedded and IoT:** one credential shared by every device and compiled into firmware, unsigned or unverified OTA updates, debug ports (JTAG, UART shells) open in production, no TLS to the server, default passwords. **High-Critical.**
+
+**Browser extensions:** `<all_urls>` or broad host permissions without need, remote code loading, page content inserted as HTML into extension pages, unvalidated messages from content scripts or `externally_connectable` origins. **Medium-High.**
+
+**Libraries and packages:** registry accounts without two-factor authentication, publishing from a laptop instead of CI with provenance, install scripts that download code. **Medium.**

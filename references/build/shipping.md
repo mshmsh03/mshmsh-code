@@ -1,10 +1,10 @@
 # Shipping: environments, release, monitoring, launch
 
-Read this before the first deploy and before every release. SKILL.md "Shipping" has the short version.
+Read this before the first deploy and before every release, whatever the software is. SKILL.md Build §13 has the short version. Platform specifics live in `../platforms/` (desktop installers and signing in `../platforms/desktop.md` §3, CLI and package distribution in `../platforms/cli-scripts-automation.md` §8 and `../platforms/games-embedded-other.md` §4, firmware updates in `../platforms/games-embedded-other.md` §2).
 
 ## Contents
 1. Environments and config
-2. Deploying web apps
+2. Deploying web apps and services
 3. Releasing mobile and desktop apps
 4. Feature flags, staged rollout and rollback
 5. Monitoring, crash reporting, logs, alerts
@@ -16,20 +16,31 @@ Read this before the first deploy and before every release. SKILL.md "Shipping" 
 
 ## 1. Environments and config
 
-- **Separate dev and prod completely.** Use one Firebase project per environment (`myapp-dev`, `myapp-prod`) with `.firebaserc` aliases (`firebase use dev`), and Flutter flavors, each with its own `google-services.json`, `GoogleService-Info.plist` and `firebase_options_<env>.dart`. For Supabase, use separate projects. Never test against production data.
+- **Separate dev and prod completely:** separate databases, accounts or projects, credentials and storage buckets. For Firebase, one project per environment (`myapp-dev`, `myapp-prod`) with `.firebaserc` aliases (`firebase use dev`), and app flavors each with its own config files; for Supabase, separate projects; for your own servers, separate databases and secrets per environment. Never test against production data.
 - **Payments:** the gateway's sandbox credentials and a test callback URL for dev and preview, live credentials only in production. With Stripe, each webhook endpoint has its own `whsec_` secret.
 - **Secrets:**
   - `.env.example` is committed; `.env` never is.
   - CI secrets go in GitHub Secrets, and production secrets in the host's secret store. A GitHub Environment (`environment: production`) adds prod-only secrets plus a required reviewer.
   - CI that runs on pull requests never holds production secrets.
-- **Validate config at startup and fail immediately when something is missing:** a zod schema over `process.env` in JS; in Dart, a startup check that throws when any key from `--dart-define-from-file=env/prod.json` is empty. Don't use `assert`, which release builds strip. A missing key should crash at boot, not at the first payment.
-- **Build-time config is baked in and public:** `NEXT_PUBLIC_*`, `VITE_*`, `EXPO_PUBLIC_*` and `--dart-define`. A staging build can't be promoted to production; build once per environment, or load config at runtime.
+- **Validate config at startup and fail immediately when something is missing:** a schema over the environment (zod in JS, Pydantic settings in Python, envconfig in Go, options validation in .NET, `@ConfigurationProperties` validation in Spring); in Dart, a startup check that throws when any key from `--dart-define-from-file=env/prod.json` is empty. Don't use `assert`, which release builds strip. A missing key should crash at boot, not at the first payment.
+- **Build-time config is baked in and public:** `NEXT_PUBLIC_*`, `VITE_*`, `EXPO_PUBLIC_*`, `--dart-define`, mobile build configs. A staging build can't be promoted to production; build once per environment, or load config at runtime.
 - **Cap the bill:**
-  - Set budget alerts (GCP, Supabase, OpenAI). Firebase budgets only alert, they don't stop spending.
+  - Set budget alerts (cloud providers, Supabase, AI providers). Firebase and most cloud budgets only alert; they don't stop spending.
   - Cap autoscaling. Firebase App Hosting `maxInstances` defaults high; set it low for a shop site.
   - Set hard spend limits at LLM providers.
 
-## 2. Deploying web apps
+## 2. Deploying web apps and services
+
+**Pick the target with the user** (`choosing-a-stack.md` §7): static hosting, a platform service, serverless functions, containers, a plain server, or on-premises. Whatever the target:
+- **Build once, test that artifact, deploy the same artifact** to staging and then production (a build folder, a container image tagged with the git SHA, a release binary).
+- **Migrations run before the code that needs them,** as a separate, logged step (§6).
+- **Zero-downtime deploys** where users are active: rolling or blue-green, with a health check gating traffic.
+- **Containers:** small base images, a non-root user, no secrets baked into layers (pass them at runtime), pinned base image versions, and an image scan in CI.
+- **A plain server (VPS):** a process manager (systemd, a container runtime), a reverse proxy with automatic TLS, automatic security updates, a firewall allowing only the needed ports, SSH keys instead of passwords, and backups copied off the machine.
+- **Infrastructure as code** (Terraform, OpenTofu, Pulumi, the platform's config file) once there's more than a couple of resources, reviewed like code, with `plan` before `apply`.
+
+The provider notes below cover common static and web hosts.
+
 
 - **Build once, test it, ship those exact files.** Preview deploys for every PR (Netlify deploy previews, `firebase hosting:channel:deploy pr-123 --expires 3d`), then promote the tested build (`firebase hosting:clone <site>:<channel> <site>:live`) rather than rebuilding. Previews send `noindex`; production must not.
 - **Firebase Hosting:**
@@ -80,9 +91,13 @@ Read this before the first deploy and before every release. SKILL.md "Shipping" 
 - Set a `runtimeVersion` policy so an update never lands on an incompatible binary.
 - Run `npx expo-doctor` and `npx expo install --check` before each release.
 
+**Native iOS and Android:** archive and upload with Xcode or Fastlane (TestFlight), and `bundleRelease` with Gradle for Play; keep signing in CI secrets or a managed signing service, never in the repo.
+
 **Windows desktop (Flutter):**
 - Ship the whole `build\windows\x64\runner\Release` folder plus the VC++ runtime DLLs (`msvcp140.dll`, `vcruntime140.dll`, `vcruntime140_1.dll`).
 - Package it as an MSIX or with Inno Setup, code-sign it, and test on a clean VM.
+
+**Other desktop frameworks** (Electron, Tauri, .NET, Qt, macOS): signing, notarization, installers and auto-update are in `../platforms/desktop.md` §3.
 
 **Updates outside the stores:** sideloaded APKs and Windows tills never auto-update. Either ship a version check against a JSON file you host (latest version, minimum supported version, download link), or use an MSIX with an `.appinstaller` file on Windows.
 
@@ -123,6 +138,8 @@ Read this before the first deploy and before every release. SKILL.md "Shipping" 
 
 Before instrumenting, write the 2-4 questions you'll ask during an incident ("are sales syncing?", "which shops crash since 1.5?"). Every signal should help answer one.
 
+Use the error tracker that fits the stack (Sentry, Crashlytics, Bugsnag, Rollbar, the cloud provider's error reporting), with the release version attached to every report and source maps or symbols uploaded so stack traces are readable.
+
 **Flutter crash reporting:**
 ```dart
 // Crashlytics supports Android/iOS (not Windows or web), and Windows builds share main.dart.
@@ -147,6 +164,10 @@ if (crashlytics) {
 **Web:**
 - Wrap the app in a root error boundary and add `error`/`unhandledrejection` listeners that report to Sentry or a similar service.
 - Make source maps `hidden` and upload them to the error tracker; never serve them publicly.
+
+**Services and jobs:** an error tracker in every process, request IDs in logs, metrics for rate, errors and latency, and alerts on failed or missing scheduled jobs (`../platforms/backend-and-apis.md` §8).
+
+**Desktop and CLI tools:** a crash reporter or a log file the user can send, with the version and OS in every report.
 
 **Logs:**
 - Use structured events (a stable event name plus fields), never interpolated prose.
@@ -181,7 +202,7 @@ if (crashlytics) {
   - Back up the DB before upgrading, with `VACUUM INTO` or the backup API. A plain file copy misses the `-wal` file.
   - Test the upgrade from **every** shipped version (users jump from v3 straight to v9), using a committed fixture DB for each released schema.
   - Assert that a fresh install's schema equals an upgraded one.
-  - See `mobile-and-offline.md` for the mechanics.
+  - See `../concerns/offline-first-and-sync.md` §4 for the mechanics.
 - **Server databases:**
   - Keep schema (DDL) and data (DML) migrations separate.
   - Test on production-sized data.
@@ -195,10 +216,26 @@ if (crashlytics) {
 
 ## 7. Launch checklist
 
+Use the sections that fit what you're shipping; every kind of software gets the "Every release" list.
+
+**Every release:**
+- The full test suite and the build green in CI on the exact commit being released.
+- A pre-mortem done, and its launch-blocking risks closed (`decisions-and-problem-solving.md` §10).
+- The rollback plan written (§4), backups taken and restorable (§6).
+- Monitoring proven with a test error (§5), and someone named to watch the first hour (§8).
+- Version number, changelog and release notes written; signing keys backed up.
+- An Audit-mode run on the release candidate, with no Critical findings.
+
+**APIs and services:** health checks, rate limits, timeouts, pagination, structured logs without personal data, alerts that reach a person, and documented API changes for clients (old app versions keep calling the old shapes).
+
+**Mobile and desktop apps:** the release build tested on the cheapest supported device and a clean machine, store listings and privacy forms complete (§3), the forced-update path tested, and offline behaviour checked.
+
+**CLIs and libraries:** `--help` and `--version` correct, install tested from the published package in a clean environment, changelog and migration notes for breaking changes.
+
 **Every web page:**
 - A unique `<title>` and meta description, and a self-referencing canonical.
 - `<meta charset>` first, then the viewport tag.
-- `<html lang="ckb" dir="rtl">` for Sorani, or `lang="ar" dir="rtl"`.
+- `<html lang dir>` set correctly (for example `lang="ckb" dir="rtl"` for Sorani, `lang="ar" dir="rtl"` for Arabic).
 - One `<h1>` and a sensible heading order.
 - hreflang for each language version, plus `x-default`.
 
@@ -215,14 +252,14 @@ if (crashlytics) {
 **Performance budget:**
 - LCP ≤ 2.5 s, INP ≤ 200 ms, CLS ≤ 0.1.
 - Initial JS ≤ ~200 KB gzipped.
-- Test on a mid-range Android with CPU throttling. Details in `web-frontend.md`.
+- Test on a mid-range Android with CPU throttling. Details in `../platforms/web.md` §7 and §12.
 
 **Legal and trust:**
 - A privacy policy that names what's collected (Analytics and Crashlytics included), how long it's kept, and a contact.
 - A working account-deletion path that also covers backups and analytics copies.
 - Cookie consent only if you actually set non-essential cookies.
 
-**Analytics:** a handful of named events that answer launch questions (`sale_completed`, `sync_failed`, `receipt_printed`), with no personal data in the parameters.
+**Analytics:** a handful of named events that answer launch questions (for a shop app: `sale_completed`, `sync_failed`, `receipt_printed`), with no personal data in the parameters.
 
 **Error pages:** a real 404 page, a friendly 500 page, and an offline screen for apps.
 
@@ -236,7 +273,7 @@ Release when someone can watch: not right before your day off (in Iraq the weeke
 - the health check returns 200
 - no new error types appear
 - crash-free users hold steady
-- you've run through the critical flow by hand (make a sale, sync, print)
+- you've run through the critical flow by hand (for a shop app: make a sale, sync, print)
 - logs are flowing
 
 Tell the client what changed, in plain words, and how to reach you.

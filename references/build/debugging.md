@@ -1,6 +1,6 @@
 # Debugging: a method, not guesses
 
-Read this when something is broken and the first obvious fix didn't work. SKILL.md "Debugging" has the short version.
+Read this when something is broken and the first obvious fix didn't work, in any language. SKILL.md Build §11 has the short version; `decisions-and-problem-solving.md` §8 covers problem-solving in general (and what to do first when production is on fire: stabilize, then debug).
 
 ## The rule
 
@@ -44,9 +44,11 @@ Read the whole message and stack trace, including the first frame in *your* code
 
 ### 3. Check what changed
 `git diff`, `git log --oneline -15`, and any new dependency versions, config changes or env vars since it last worked. Gotchas:
-- `NEXT_PUBLIC_`, `VITE_` and `EXPO_PUBLIC_` values are baked in at **build** time, so changing them on Netlify or Vercel needs a rebuild.
-- Netlify's build-time and function-runtime environment scopes differ.
-- A Flutter hot reload doesn't re-run `main()` or initState; hot restart or a full rebuild might "fix" a bug that isn't fixed.
+- Build-time values (`NEXT_PUBLIC_`, `VITE_`, `EXPO_PUBLIC_`, mobile build defines) are baked in at **build** time, so changing them on the host needs a rebuild, not a restart.
+- Hosts often have separate build-time and runtime environment scopes.
+- Hot reload doesn't re-run start-up code (Flutter's `main()` and `initState`, module-level code in dev servers); a restart or full rebuild might "fix" a bug that isn't fixed.
+- Caches lie: stale build caches, CDN caches, service workers, and package-manager caches. Clear the relevant one before trusting a result.
+- "Works on my machine": compare runtime versions, OS, locale and time zone, environment variables and data between the two machines.
 
 ### 4. Shrink the reproduction
 Remove one input, step or config item at a time until every remaining part is needed. That minimal case becomes the regression test.
@@ -58,10 +60,10 @@ Find similar code in the same codebase that works and list *every* difference. R
 Write 3-5 hypotheses, most likely first, each with a prediction: "if X is the cause, changing Y makes the bug disappear." Show the list to the user; they can often re-rank it instantly ("oh, that only happens on the Windows till"). Test one variable at a time and revert probes that didn't confirm anything.
 
 ### 7. Instrument instead of guessing
-- Use a debugger first. Otherwise add targeted logs at the boundaries that tell your hypotheses apart; never "log everything".
+- Use a debugger first (the IDE's, `pdb`/`debugpy`, Delve for Go, `lldb`/`gdb`, Chrome DevTools, Flutter DevTools, Android Studio and Xcode). Otherwise add targeted logs at the boundaries that tell your hypotheses apart; never "log everything".
 - Tag temporary logs (`[DEBUG-a4f2]`) so they can be found and removed (`grep -rn "\[DEBUG-"`).
-- For multi-step paths (app → Cloud Function → Firestore; CI → build → deploy), log what goes into and comes out of each step once to find the broken one.
-- To find where a bad value comes from, log the inputs plus a stack trace (`new Error().stack`, `StackTrace.current`) right before the risky call, then climb to the **first** place the value goes wrong.
+- For multi-step paths (app → API → database; queue → worker → third party; CI → build → deploy), log what goes into and comes out of each step once to find the broken one.
+- To find where a bad value comes from, log the inputs plus a stack trace (`new Error().stack`, `StackTrace.current`, `traceback.print_stack()`, `debug.PrintStack()`) right before the risky call, then climb to the **first** place the value goes wrong.
 - For UI bugs, drive the real app (browser automation, a device) and look, rather than reasoning about it.
 - For performance problems, measure a baseline first, then bisect.
 
@@ -70,7 +72,7 @@ Write 3-5 hypotheses, most likely first, each with a prediction: "if X is the ca
 git bisect start
 git bisect bad
 git bisect good <last-known-good-sha>
-git bisect run flutter test test/sale_test.dart   # or: npm test -- path; exit 125 = skip commit
+git bisect run <the one-test command>   # e.g. pytest tests/test_sale.py, go test ./sales -run TestX; exit 125 = skip commit
 git bisect reset
 ```
 
@@ -83,7 +85,7 @@ git bisect reset
 - After the root fix, add the cheap layers that stop it coming back:
   - validation at the entry point
   - a check in the business logic
-  - an environment guard (tests refuse to run against the production Firebase project)
+  - an environment guard (tests refuse to run against the production database or project)
   - enough logged context to diagnose it next time
 
 ### 10. Lock it in and clean up
@@ -91,12 +93,21 @@ git bisect reset
 - Re-run the original repro and the full suite.
 - Delete the tagged logs and throwaway scripts.
 - Put the confirmed cause in the commit message ("fix: stock went negative when two tills synced the same sale; sync now upserts by sale UUID").
-- Explain to the user, in plain words, what actually went wrong, not just what you changed.
+- Explain to the user, in plain words, what actually went wrong, not just what you changed, with a short report:
+
+  ```
+  Problem:     <expected vs actual, and who it affected>
+  Root cause:  <what actually went wrong, and why it happened>
+  Fix:         <what changed, and the commit>
+  Proof:       <the regression test, red before and green after; the original repro now passing>
+  Prevention:  <the check, validation or monitoring that stops it coming back>
+  ```
+- When the right fix is a real choice (a quick patch now and a redesign later, a data repair script, a migration), offer the options with their trade-offs before doing the bigger one.
 - "No root cause" usually means the investigation isn't finished. If the cause really is external (a provider outage, an OS bug), document it and add handling and monitoring.
 
 ## When to stop and question the design
 
-If the **third** fix fails, or each fix uncovers new shared state or coupling, or the fix needs a big refactor, stop patching. Summarize what was tried and what it revealed, then discuss the design with the user before a fourth attempt. This is separate from the context-hygiene rule (SKILL.md "Context hygiene and subagents"), which says when to start a fresh session. Resist pressure here: "just add a retry" and "that's how it's supposed to work" aren't evidence.
+If the **third** fix fails, or each fix uncovers new shared state or coupling, or the fix needs a big refactor, stop patching. Summarize what was tried and what it revealed, then offer the design options to the user before a fourth attempt. A fresh session (SKILL.md "Solving problems") helps when the context is full of failed theories. Resist pressure here: "just add a retry" and "that's how it's supposed to work" aren't evidence.
 
 ## Excuses to reject
 - "Quick fix now, investigate later."

@@ -1,58 +1,27 @@
-# Web frontend: React/Next.js, UI details, accessibility, performance, RTL
+# Web: any framework, UI details, accessibility, performance
 
-Read this when building any web UI: menus, portfolios, company sites, dashboards. SKILL.md "Stack rules" has the short version. For design direction and visual quality, also use `impeccable` or `unslop-ui` if installed. This file is about correctness and the small details.
+Read this when building any web UI: content sites, web apps, dashboards, admin tools. SKILL.md has the short version. For visual design quality, also use `designa-xoshaka`, `impeccable` or `unslop-ui` if installed; this file is about correctness and the small details. Right-to-left layout, Kurdish and Arabic text, digits and locale formatting are in `../concerns/localization-and-rtl.md`.
+
+Sections 1-8 and 11-12 hold for every framework. Section 9 is React, section 10 is Next.js, and section 13 covers other frameworks and server-rendered apps.
 
 ## Contents
-1. RTL and Kurdish/Arabic text
-2. Forms and inputs
-3. Focus, keyboard, semantics
-4. Every async view's four states
-5. Touch, layout, content details
-6. Animation and motion
-7. Accessibility numbers and testing
-8. Core Web Vitals and how to fix each
-9. Images, fonts, third-party scripts
-10. React correctness (what AI code gets wrong)
-11. Next.js server/client rules
-12. Bundles, caching, static hosting, SEO
-13. Measuring honestly
+1. Forms and inputs
+2. Focus, keyboard, semantics
+3. Every async view's four states
+4. Touch, layout, content details
+5. Animation and motion
+6. Accessibility numbers and testing
+7. Core Web Vitals and how to fix each
+8. Images, fonts, third-party scripts
+9. React correctness (what AI code gets wrong)
+10. Next.js server/client rules
+11. Bundles, caching, static hosting, SEO
+12. Measuring honestly
+13. Other frameworks and server-rendered apps
 
 ---
 
-## 1. RTL and Kurdish/Arabic text
-
-- **Server-render** `<html lang="ckb" dir="rtl">` (`ar` for Arabic) into the HTML itself. Setting `dir` after hydration flashes and shifts the layout. Tag passages in another language with their own `lang` so screen readers switch voice.
-- **Logical CSS only:**
-  - Use `margin-inline-start/end`, `padding-inline-*`, `inset-inline-start/end`, `border-inline-*` and `text-align: start/end`.
-  - In Tailwind, use `ms-/me-/ps-/pe-/start-/end-`, `rounded-s/e` and the `rtl:` variant, never `ml-/mr-/pl-/pr-/left-/right-`.
-  - Prefer `gap` to `space-x-*`.
-- **Don't add `flex-row-reverse` "for RTL".** Flex and grid already follow `dir`, so it flips twice.
-- **Things that don't flip on their own:**
-  - `translateX`, keyframes, `background-position` and shadow x-offsets.
-  - JS `scrollLeft`, which behaves differently in RTL.
-  - Carousels: pass the library's rtl option.
-  - Directional icons: add `rtl:-scale-x-100` to chevrons, arrows and back buttons. Leave logos, play buttons and checkmarks alone.
-  - Slide-in animations: invert the offset under `:dir(rtl)`.
-- **Mixed direction:**
-  - `dir="ltr"` on tel, email, URL and code inputs, and on displayed phone numbers.
-  - `<bdi>` or `dir="auto"` around user names and other user-generated text.
-  - Unicode isolates (U+2066-2069) in strings built in JS.
-- **Arabic-script typography:**
-  - `letter-spacing: 0` (spacing breaks letter joining).
-  - No uppercase-based emphasis, since the script has no case.
-  - Line-height around 1.6-1.8, often one size step larger than Latin text.
-  - The font must cover Sorani letters (ڕ ڵ ێ ۆ ە ڤ). Test with a real Kurdish sentence, never lorem ipsum.
-- **Font subsetting:** use one `@font-face` per script with `unicode-range`. Arabic needs at least U+0600-06FF, U+0750-077F, U+FB50-FDFF and U+FE70-FEFF. A Latin-only `unicode-range` copied from a tutorial sends Kurdish text to a fallback font.
-- **Numbers and dates:**
-  - Format all output with `Intl.*`, passing an explicit locale fallback list (`['ckb', 'ar-IQ']`), `numberingSystem` (`latn` or `arab`, agreed with the client) and `timeZone: 'Asia/Baghdad'`, so server and browser output match.
-  - IQD gets `maximumFractionDigits: 0`. Never mix 0- and 2-decimal amounts on one screen.
-  - Use `Intl.PluralRules`, since Arabic has six plural forms, and `Intl.Collator(locale)` for sorting names.
-- **Digit input:** Kurdish, Arabic and Persian keyboards type ٠-٩ or ۰-۹. Normalize them to 0-9 before `Number()`, regex or zod. `type="number"` can reject them, so use `type="text" inputmode="decimal"` and validate after normalizing.
-- **Search:** normalize ي→ی and ك→ک on both sides, strip tatweel and diacritics, and compare with `Intl.Collator(loc, { sensitivity: 'base' })`. Otherwise menu and product search misses obvious matches.
-- **Locale in the URL** (`/ckb/...`) so shared links and caches carry it. Detect language from `Accept-Language` / `navigator.languages`, never IP. Mark brand names with `translate="no"`.
-- **Keyboard shortcuts:** with a Kurdish or Arabic layout active, `e.key` is an Arabic letter. Match on `e.code` instead.
-
-## 2. Forms and inputs
+## 1. Forms and inputs
 
 - **Every control:**
   - A real `<label>`, wrapping checkboxes and radios so the text is part of the hit target. A placeholder is an example ending in `…`, never the label.
@@ -73,7 +42,7 @@ Read this when building any web UI: menus, portfolios, company sites, dashboards
 - **Big forms:** use uncontrolled inputs (`defaultValue` + `FormData`, or react-hook-form) so each keystroke doesn't re-render the whole form.
 - **Search boxes that aren't logins:** `autocomplete="off"` and non-credential field names, so password managers don't pop up.
 
-## 3. Focus, keyboard, semantics
+## 2. Focus, keyboard, semantics
 
 - **Focus:** one global `:focus-visible` ring (2 px outline with offset, ≥3:1 contrast). Never `outline: none` without a replacement.
 - **Sticky headers** must not cover the focused element or anchor targets: set `scroll-padding-top` on `html`.
@@ -88,7 +57,7 @@ Read this when building any web UI: menus, portfolios, company sites, dashboards
 - **Icon-only buttons** get an `aria-label`, and decorative SVGs get `aria-hidden="true"`. The accessible name contains the visible text. Actions fire on click, not on mousedown or touchstart.
 - **Lists:** `list-style: none` (Tailwind's preflight) can drop list semantics in Safari; add `role="list"` where it matters.
 
-## 4. Every async view's four states
+## 3. Every async view's four states
 
 Every screen that loads data has **loading, empty, error and success** states, designed on purpose:
 - **Loading:**
@@ -104,7 +73,7 @@ Every screen that loads data has **loading, empty, error and success** states, d
   - Use `role="alert"` only for errors.
 - **Error boundaries** catch render errors only, not event handlers or async code. Every fetch or mutation path needs a `catch` that changes what the user sees.
 
-## 5. Touch, layout, content details
+## 4. Touch, layout, content details
 
 - **Touch:**
   - Targets ≥24×24 CSS px (WCAG AA); aim for 44-48. Enlarge small controls with padding or an invisible `::before`.
@@ -140,7 +109,7 @@ Every screen that loads data has **loading, empty, error and success** states, d
   - Back/Forward restores scroll.
   - Don't break the back/forward cache with `unload` handlers.
 
-## 6. Animation and motion
+## 5. Animation and motion
 
 - **Respect reduced motion:**
   - A global `@media (prefers-reduced-motion: reduce)` rule.
@@ -154,7 +123,7 @@ Every screen that loads data has **loading, empty, error and success** states, d
 - **Media:** use `<video autoplay muted loop playsinline poster>` instead of a GIF, and stop it under reduced motion.
 - **Multi-page static sites:** `@view-transition { navigation: auto; }` gives CSS-only cross-page fades.
 
-## 7. Accessibility numbers and testing
+## 6. Accessibility numbers and testing
 
 - **Contrast (WCAG 2 AA):**
   - 4.5:1 for normal text.
@@ -175,7 +144,7 @@ Every screen that loads data has **loading, empty, error and success** states, d
   - In DevTools' Rendering panel, emulate reduced motion, dark mode and vision deficiencies.
   - A Lighthouse score of 100 doesn't mean accessible: automated tools catch only some problems.
 
-## 8. Core Web Vitals and how to fix each
+## 7. Core Web Vitals and how to fix each
 
 Thresholds (good / poor) at the 75th percentile, mobile and desktop separately:
 
@@ -208,7 +177,7 @@ Lab metrics: TTFB 0.8/1.8 s, FCP 1.8/3 s, TBT 200/600 ms.
 
 **Prerendering:** Speculation Rules (`<script type="speculationrules">`, `eagerness: "moderate"`) prerender likely next pages in Chromium. Exclude logout and cart.
 
-## 9. Images, fonts, third-party scripts
+## 8. Images, fonts, third-party scripts
 
 - **Images** (menus and portfolios are image-heavy):
   - Format chain: AVIF → WebP → JPEG via `<picture>`.
@@ -227,7 +196,7 @@ Lab metrics: TTFB 0.8/1.8 s, FCP 1.8/3 s, TBT 200/600 ms.
   - Don't add trackers without the client's approval.
   - Remove preconnects to origins that receive no requests.
 
-## 10. React correctness (what AI code gets wrong)
+## 9. React correctness (what AI code gets wrong)
 
 - **Never define a component inside another component.** It remounts on every render: inputs lose focus on each keystroke and state resets. Lint: `react/no-unstable-nested-components`.
 - **Derive, don't sync:**
@@ -249,7 +218,7 @@ Lab metrics: TTFB 0.8/1.8 s, FCP 1.8/3 s, TBT 200/600 ms.
 - **localStorage:** a versioned key and minimal data, never tokens or personal data, and always wrapped in `try/catch` (it throws in Safari private mode or when full).
 - **Composition:** replace piles of boolean props with explicit variant components or compound components sharing a context.
 
-## 11. Next.js server/client rules
+## 10. Next.js server/client rules
 
 - **No waterfalls:**
   - Independent `await`s in a row should be `Promise.all`; start promises early and await them late.
@@ -267,21 +236,51 @@ Lab metrics: TTFB 0.8/1.8 s, FCP 1.8/3 s, TBT 200/600 ms.
 - **`next/image`:** `sizes` whenever you use `fill`. Mark the LCP image as high priority: the `priority` prop up to Next 15. Next 16 deprecated `priority`, so follow that version's docs (`preload` / `fetchPriority="high"`). Use `next/font` for self-hosted fonts with fallback metrics.
 - **Measure production only:** `next build && next start`. Dev mode skips optimizations.
 
-## 12. Bundles, caching, static hosting, SEO
+## 11. Bundles, caching, static hosting, SEO
 
 - **Bundle budget** (gzipped starting points): initial JS ≤200-300 KB, CSS ≤50-100 KB, fonts ≤100 KB, third-party ≤200 KB, whole page ≤1.5 MB. Analyze with `@next/bundle-analyzer` or `npx vite-bundle-visualizer`.
 - **Shrinking bundles:**
   - Lazy-load heavy, rarely used UI (editors, charts, maps, 3D) with `next/dynamic` or `React.lazy`, and preload on hover or focus.
   - Avoid `moment` and whole-`lodash` imports.
   - In Next.js, list icon and utility libraries in `optimizePackageImports`. Check the visualizer before rewriting imports in Vite, which usually tree-shakes named imports.
-- **Caching:** hashed assets get `max-age=31536000, immutable`; HTML gets `no-cache`. Netlify `_headers`; GitHub Pages can't set headers (see `shipping.md`).
+- **Caching:** hashed assets get `max-age=31536000, immutable`; HTML gets `no-cache`. Netlify `_headers`; GitHub Pages can't set headers (see `../build/shipping.md`).
 - **SPA routing:** Netlify `/* /index.html 200`; GitHub Pages needs `base`/`basePath` plus a 404 fallback or hash routing.
-- **Link previews and SEO:** OG tags must be in the served HTML, not set client-side (see the launch checklist in `shipping.md`).
+- **Link previews and SEO:** OG tags must be in the served HTML, not set client-side (see the launch checklist in `../build/shipping.md` §7).
 - **Production hygiene:** no public source maps, Brotli/gzip on, no redirect chains, no mixed content, a clean console.
 
-## 13. Measuring honestly
+## 12. Measuring honestly
 
 - **Lab setup:** mobile first, with viewport, network and 4-6× CPU throttling set explicitly. Use incognito and a cold cache. Do at least 3 runs and report median, range and conditions. Report metric values, not just the Lighthouse score.
 - **Field data:** CrUX is the p75 over 28 days, and small sites often have none; report "unavailable", not "passing". For real-user numbers, send `web-vitals` `onLCP/onINP/onCLS` via `sendBeacon`, grouped by route, with no personal data.
 - **Changing things:** change one thing per measurement and revert changes whose gain is inside run-to-run noise. Guard budgets with Lighthouse CI.
 - **Verdict:** report an already-fast page as fine. Don't invent work.
+
+## 13. Other frameworks and server-rendered apps
+
+The rules in sections 1-8 and 11-12 are about HTML, CSS, the browser and users, so they hold everywhere. Framework-specific traps:
+
+**Vue and Nuxt:**
+- Don't destructure reactive objects without `toRefs` (reactivity is lost); use `computed` for derived values instead of watchers that copy state.
+- `v-html` is an XSS sink, like `dangerouslySetInnerHTML`; sanitize or avoid it.
+- In Nuxt, fetch with `useFetch`/`useAsyncData` so server and client don't fetch twice, and keep secrets in server-only runtime config (`runtimeConfig`, not its `public` part).
+- Server routes (`server/api/`) authenticate and check ownership themselves, like any endpoint.
+
+**Svelte and SvelteKit:**
+- Load data in `+page.server.ts` / `+layout.server.ts` when it needs secrets or the database; universal `+page.ts` code also runs in the browser.
+- Form actions and `+server.ts` endpoints are public entry points: check the session and ownership in each.
+- Private env vars come from `$env/static/private` or `$env/dynamic/private`; anything in `$env/*/public` ships to the browser.
+- `{@html}` is an XSS sink.
+
+**Angular:**
+- Use the built-in sanitization; `bypassSecurityTrust*` calls are security review items.
+- Unsubscribe from observables (the `async` pipe or `takeUntilDestroyed`), or components leak.
+- Prefer signals or `OnPush` change detection for large views; check the version's docs, since the recommended patterns moved quickly between releases.
+
+**Server-rendered apps** (Django, Rails, Laravel, ASP.NET Core, Spring MVC, Go templates, PHP):
+- Keep the template engine's auto-escaping on; every "raw" or "safe" filter (`|safe`, `raw`, `{!! !!}`, `Html.Raw`, `template.HTML`) is an XSS review item.
+- CSRF protection on every state-changing form (the framework's middleware, not a hand-rolled token).
+- Mass assignment: allow-list the fields a form may set (Django forms, Rails strong parameters, Laravel `$fillable`, DTOs in ASP.NET and Spring).
+- N+1 queries hide in templates that touch relations in a loop: `select_related`/`prefetch_related`, `includes`, `with()`, `Include()`, fetch joins.
+- htmx or similar partial-page updates are fine; each partial endpoint still checks auth and ownership.
+
+**Plain static sites:** sections 1-8 and 11 still apply. Forms need a server or a form service with spam protection; never put an API key for a mail or database service in the page.
