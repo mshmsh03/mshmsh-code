@@ -1,6 +1,6 @@
 # Desktop apps: Windows, macOS and Linux
 
-Read this when building an app that installs on a computer: Electron, Tauri, Flutter desktop, .NET (WPF, WinUI, WinForms, Avalonia, MAUI), Qt, or native Swift/AppKit. Offline data, sync, printers and scanners are in `../concerns/offline-first-and-sync.md`; right-to-left layout in `../concerns/localization-and-rtl.md` §9.
+Read this when building an app that installs on a computer: Electron, Tauri, Flutter desktop, .NET (WPF, WinUI, WinForms, Avalonia, MAUI), Qt, or native Swift/AppKit. Offline data, sync, printers and scanners are in `../concerns/offline-first-and-sync.md`; right-to-left layout in `../concerns/localization-and-rtl.md` §9; the look and the words on screen in `../concerns/visual-design-and-ux-writing.md`.
 
 ## Contents
 1. Decide these first

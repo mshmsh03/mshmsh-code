@@ -45,6 +45,10 @@ Restart Claude Code, then type `/mshmsh-code`, or just describe what you want ("
 
 **Problem-solving.** Clear problems get the standard answer; complicated ones get analysis and options; unknowable ones get a small time-boxed experiment; emergencies get stabilized first. After three failed attempts at one approach it stops and rethinks instead of patching on.
 
+**Design.** Before building screens, it offers 2-3 visual directions drawn from what the product is (colours, type, a layout sketch), builds the one you pick, and checks it against the looks AI-made apps keep landing on. Buttons, errors and empty screens get clear wording.
+
+**Red flags.** A table of the excuses that skip steps ("it's a small change", "it should work", "I know this API"), each with what to do instead.
+
 **Build mode** ("build", "add", "fix", "which stack should I use")
 
 1. **Discovery sized to the task:** two or three lines of approach for a small change; for a project, questions about users, flows, quality needs, constraints and your dev setup, played back for your yes.
@@ -77,7 +81,7 @@ Restart Claude Code, then type `/mshmsh-code`, or just describe what you want ("
 | `references/build/security.md` | Secrets (including keeping them out of the agent's context), auth, access rules, input handling, payments, uploads, rate limits, LLM features, supply chain |
 | `references/build/shipping.md` | Environments, deploys, store and desktop releases, flags, monitoring, migrations, launch checklists |
 | `references/platforms/*.md` | Web, backends and APIs, mobile, desktop, CLIs and automation, data and AI, games/embedded/extensions/libraries |
-| `references/concerns/*.md` | Localization and right-to-left, money and business rules, offline-first and sync |
+| `references/concerns/*.md` | Localization and right-to-left, money and business rules, offline-first and sync, visual design and UX writing |
 | `references/audit/*.md` | The audit workflow and report format, security checks for every stack, quality checks and the launch verdict |
 | `scripts/scan.sh` | The audit's read-only lead finder |
 | `scripts/guard-commands.mjs` | A Claude Code hook that blocks destructive commands and asks before deploys, publishes, infrastructure and database changes, and printing secrets |
@@ -100,6 +104,10 @@ GitHub runs both script test suites and a SKILL.md check on every push and pull 
 - Claude app: download [mshmsh-code.zip](https://github.com/mshmsh03/mshmsh-code/releases/download/latest/mshmsh-code.zip) again and upload it in place of the old one.
 
 What changed is in [CHANGELOG.md](CHANGELOG.md).
+
+## Credits
+
+Some ideas are adapted, in this skill's own words, from Anthropic's frontend-design skill (a visual direction drawn from the subject, the looks to avoid, interface wording) and Jesse Vincent's [superpowers](https://github.com/obra/superpowers) (red flags for skipped steps).
 
 ## Licence
 
