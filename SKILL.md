@@ -160,7 +160,7 @@ Version numbers, CVE floors and store deadlines in these files are snapshots (la
 - `scripts/guard-commands.mjs`: a Claude Code hook that blocks destructive commands, asks before production deploys and publishes, and asks before printing secret files. Setup is in `references/build/git-and-tooling.md` §3.
 - `scripts/tests/`: `node scripts/tests/guard.test.mjs` and `bash scripts/tests/scan.test.sh`. Run both after changing either script.
 
-**Related skills, when installed:** `interview-me` or `grill-me` (intent), `spec-driven-development`, `domain-modeling`, `doubt-driven-development`, `pre-mortem`, `tdd`; `designa-xoshaka` (or `impeccable` / `unslop-ui`) for how a UI looks; `unslop-code`; `claude-api`; and official stack skills (Supabase, Expo, Vercel's React rules, Flutter) when the project uses that stack.
+**Related skills, when installed:** `interview-me` or `grill-me` (intent), `spec-driven-development`, `domain-modeling`, `doubt-driven-development`, `pre-mortem`, `tdd`; `impeccable` or `unslop-ui` for how a UI looks; `unslop-code`; `claude-api`; and official stack skills (Supabase, Expo, Vercel's React rules, Flutter) when the project uses that stack.
 
 # Rules for every change
 
