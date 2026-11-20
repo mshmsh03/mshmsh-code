@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.2 (2026-11-20)
+
+- The audit test's planted code is stored as `.fixture` files, and `place-files.sh` gives them their real names when the test runs. Security scanners on skills.sh had reported its deliberate bugs as the skill's own code.
+
 ## 2.0.1 (2026-11-20)
 
 - The skill works on its own and no longer points to another skill for anything.
