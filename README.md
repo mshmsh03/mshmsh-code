@@ -1,5 +1,7 @@
 # mshmsh-code
 
+[![skills.sh](https://skills.sh/b/mshmsh03/mshmsh-code)](https://skills.sh/mshmsh03/mshmsh-code) [![Check](https://github.com/mshmsh03/mshmsh-code/actions/workflows/check.yml/badge.svg)](https://github.com/mshmsh03/mshmsh-code/actions/workflows/check.yml)
+
 A Claude skill that makes an AI coding agent work like a senior engineer, in any language and for any kind of software: web, backends and APIs, mobile, desktop, CLIs and scripts, data and AI, games, embedded, browser extensions and libraries.
 
 It does three things:
@@ -25,7 +27,7 @@ Or by hand: download this repo and put the folder at
 
 Restart Claude Code, then type `/mshmsh-code`, or just describe what you want ("build me an app for my friend's pharmacy", "which database should I use?", "this bug keeps coming back", "is my app safe to launch?").
 
-**Claude app:** zip the folder and upload it in the app's skills settings. Hooks and slash commands only exist in Claude Code.
+**Claude app:** download [mshmsh-code.zip](https://github.com/mshmsh03/mshmsh-code/releases/download/latest/mshmsh-code.zip) and upload it in the app's skill settings. It is rebuilt every time this repo changes. Hooks and slash commands only exist in Claude Code.
 
 **Renamed:** this skill was called `vibe-code` until 2026-11-19. If you installed the old one, delete that folder (or remove the old skill in the app) so the two don't both load.
 
@@ -81,12 +83,23 @@ Restart Claude Code, then type `/mshmsh-code`, or just describe what you want ("
 | `scripts/guard-commands.mjs` | A Claude Code hook that blocks destructive commands and asks before deploys, publishes, infrastructure and database changes, and printing secrets |
 | `scripts/tests/` | Tests for both scripts |
 | `evals/` | Test cases for the skill itself, in the format `claude plugin eval` reads |
+| `CHANGELOG.md` | What changed in each version |
+| `.github/` | The check that runs on every push, and the job that builds the release zip |
 
 ## Tested
 
 - **The guard hook:** `node scripts/tests/guard.test.mjs` runs 242 checks: destructive commands blocked, risky ones asked about, everyday commands left alone, and malformed input failing closed.
 - **The scanner:** `bash scripts/tests/scan.test.sh` builds a throwaway repo with planted issues in JavaScript, Python, C#, Go, Dart, Docker, GitHub Actions, Electron and Firestore rules, then checks all 30 expected results, including that no planted secret is ever printed in full.
 - **The skill itself:** four cases in `evals/`: a new project that must ask and offer stack options, a bug fixed test-first, a database question answered as options, and an audit that must find seven planted issues without changing a file. Run them from this folder with Claude Code: `claude plugin eval . --allow-tools Write,Edit,Bash --scaffold`. In the first run the skill passed 23 of 23 checks and the same model without it 20 of 23; the skill's answers were much longer, which led to the short-by-default rules and stricter checks that followed.
+
+GitHub runs both script test suites and a SKILL.md check on every push and pull request.
+
+## Update
+
+- Claude Code: run the install command again, `npx skills add mshmsh03/mshmsh-code`. It replaces the old version.
+- Claude app: download [mshmsh-code.zip](https://github.com/mshmsh03/mshmsh-code/releases/download/latest/mshmsh-code.zip) again and upload it in place of the old one.
+
+What changed is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Licence
 
