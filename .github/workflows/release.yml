@@ -1,0 +1,50 @@
+# On every change to main, builds mshmsh-code.zip (the skill folder, ready to
+# upload in the Claude app) and puts it on the release called "latest":
+# https://github.com/mshmsh03/mshmsh-code/releases/download/latest/mshmsh-code.zip
+name: Release zip
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: true
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build mshmsh-code.zip
+        run: |
+          mkdir -p dist/mshmsh-code
+          cp -r SKILL.md README.md LICENSE CHANGELOG.md references scripts dist/mshmsh-code/
+          rm -rf dist/mshmsh-code/scripts/tests
+          cd dist && zip -qr mshmsh-code.zip mshmsh-code
+      - name: Put it on the "latest" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git tag -f latest
+          git push -f origin refs/tags/latest
+          cat > notes.md <<NOTES
+          The skill in one zip, rebuilt on every change to main (this one: ${GITHUB_SHA::7}, $(date -u +%Y-%m-%d)).
+
+          - **Claude app:** download mshmsh-code.zip and upload it in your skill settings. To update, upload the new zip in place of the old one. The guard hook only runs in Claude Code.
+          - **Claude Code:** \`npx skills add mshmsh03/mshmsh-code\`. To update, run the same command again.
+
+          The skill was called vibe-code until 2026-11-19. If you have that copy, remove it after installing this one (in the Claude app, delete vibe-code; in Claude Code, \`npx skills remove vibe-code -g\`).
+
+          What changed: [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md).
+          NOTES
+          if gh release view latest >/dev/null 2>&1; then
+            gh release upload latest dist/mshmsh-code.zip --clobber
+            gh release edit latest --title "mshmsh-code" --notes-file notes.md
+          else
+            gh release create latest dist/mshmsh-code.zip --title "mshmsh-code" --notes-file notes.md
+          fi
