@@ -1,6 +1,6 @@
 # mshmsh-code
 
-[![skills.sh](https://skills.sh/b/mshmsh03/mshmsh-code)](https://skills.sh/mshmsh03/mshmsh-code) [![Check](https://github.com/mshmsh03/mshmsh-code/actions/workflows/check.yml/badge.svg)](https://github.com/mshmsh03/mshmsh-code/actions/workflows/check.yml)
+[![Check](https://github.com/mshmsh03/mshmsh-code/actions/workflows/check.yml/badge.svg)](https://github.com/mshmsh03/mshmsh-code/actions/workflows/check.yml)
 
 A Claude skill that makes an AI coding agent work like a senior engineer, in any language and for any kind of software: web, backends and APIs, mobile, desktop, CLIs and scripts, data and AI, games, embedded, browser extensions and libraries.
 
