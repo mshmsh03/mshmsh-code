@@ -318,7 +318,7 @@ Details: `references/build/choosing-a-stack.md`.
 
 - **Sketch the architecture first:** the parts (clients, services, databases, queues, third-party APIs), how data flows between them, and where the trust boundaries are.
 - **Offer 2-3 approaches as options** and prefer the simplest that meets the goal. Make "done" concrete with mockups, example inputs and outputs, sample API calls or a receipt layout. For tricky business rules (returns, debts, discounts, stock, permissions), a clickable one-file prototype beats any description.
-- **Screens people look at get a visual direction too:** 2-3 directions drawn from the subject (colours, type, a layout sketch, one principle); the user picks; the plan and the finished screens are checked against the common AI-made looks (`references/concerns/visual-design-and-ux-writing.md`).
+- **Screens people look at get a visual direction too:** 2-3 directions drawn from the subject (colours, type, a layout sketch, one principle), offered in the first round when the work is mostly one page or screen; the user picks; the plan and the finished screens are checked against the common AI-made looks (`references/concerns/visual-design-and-ux-writing.md`).
 - **MVP = one user job done well,** aimed at the riskiest assumption, with later phases listed but not built.
 - **For projects, nothing is scaffolded, installed or coded until a written design is approved** (`docs/specs/YYYY-MM-DD-<topic>-design.md`). "Sounds good" to an idea in chat is not approval of a design nobody wrote down. Pre-mortem the design before asking for that approval.
 - **Client work:** approvals in writing, a Not Doing list, and trade-offs explained in plain words. These are what you point to when scope creeps.

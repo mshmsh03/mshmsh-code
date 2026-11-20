@@ -36,7 +36,7 @@ Agree these with the user (or their client) before the first screen, because eac
 - **Gender and grammatical agreement** may need select messages; ask a native speaker.
 - **Keys describe meaning** (`checkout.pay_button`), not the English text, so fixing the English doesn't orphan translations.
 - **Length changes:** translations can be 30-50% longer or much shorter. Layouts must grow, wrap or truncate gracefully; no fixed-width buttons.
-- **Fonts must cover every letter** you need (Sorani adds ڕ ڵ ێ ۆ ە ڤ پ چ ژ گ to Arabic). Test with real sentences, never lorem ipsum; missing glyphs show as boxes or fall back to an ugly font.
+- **Fonts must cover every letter** you need (Sorani adds ڕ ڵ ێ ۆ ە ڤ پ چ ژ گ to Arabic). Test with real sentences, never lorem ipsum; missing glyphs show as boxes or fall back to an ugly font. Checked in Nov 2026 against the Google Fonts files: Noto Naskh Arabic, Noto Kufi Arabic, Noto Sans Arabic, Vazirmatn, IBM Plex Sans Arabic, Amiri, Jomhuria and Playpen Sans Arabic cover the Sorani letters; Cairo, Lalezar, Rakkas, Markazi Text, Baloo Bhaijaan 2 and Readex Pro don't (Readex Pro also lacks پ چ ژ گ). Fonts get updated, so check the files you actually ship.
 - **Arabic script needs room:** larger line height (around 1.6-1.8 on the web), often one size step bigger than Latin, no letter-spacing (it breaks letter joining), no uppercase emphasis (there is no case).
 - **A glossary** with one term per concept and its label in each language keeps translations consistent across screens (`../build/planning.md` §6).
 - **Machine translation** is a draft; a native speaker reviews anything customers see, especially legal, money and error texts.

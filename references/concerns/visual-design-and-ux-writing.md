@@ -22,14 +22,14 @@ If the project already has a brand, a design system or an approved mockup, follo
 
 ## 2. Offer 2-3 directions, build the one picked
 
-How the product looks is the user's decision (Decisions, in SKILL.md). For a new interface or a redesign:
+How the product looks is the user's decision (Decisions, in SKILL.md). When the work is mostly one page or screen (a landing page, a menu site, a single dashboard), offer the directions in the first round, next to the questions, so one reply settles both; for a bigger app they come at the Design step. For a new interface or a redesign:
 1. Draft 2-3 directions that truly differ. Each one is a small token plan:
    - **Colour:** 4-6 named hex values with their roles (background, surface, text, accent, error).
    - **Type:** one or two families and what each one is for.
    - **Layout:** one sentence and a small ASCII wireframe of the main screen, including how content aligns.
    - **One principle** that makes it this product's own.
-2. Recommend one, for a reason tied to the subject and the audience. Show the directions in the question tool's preview, or as a quick static mockup of the main screen.
-3. Build only the direction picked. Later screens inside the agreed design don't need a new round.
+2. Recommend one, for a reason tied to the subject and the audience. Keep the first round short: in chat, each direction gets its name and idea in one line, then three or four key colours, the type and the layout in a line or two. The full token plans and the wireframes go in the spec or design file, or in the question tool's preview where there is one. Offer a rendered side-by-side mockup instead of building it unasked; it's worth making when the user wants to see the looks or the choice is hard to judge from text.
+3. Build only the direction picked, starting with a check that its fonts cover every letter and digit the product needs (§4). Later screens inside the agreed design don't need a new round.
 
 ## 3. Check the plan against the defaults
 
@@ -50,7 +50,7 @@ The user's own words win: when they ask for one of these looks, build it.
 - One family, or two that are clearly different. Choose them for this product, not the family you'd use anywhere.
 - Set a type scale with deliberate sizes, weights and spacing. A headline can carry the design itself.
 - Keep body lines under about 80 characters. Serif body text gets a little more line height than sans-serif.
-- Check that the families cover every script and digit the product needs before committing to them (`localization-and-rtl.md`).
+- Before building with the picked families, check that they cover every script and digit the product needs (`localization-and-rtl.md`). In the first round, choose from families known to cover them (`localization-and-rtl.md` lists some for Kurdish) and say coverage is checked after the pick.
 
 ## 5. Structure, the first screen and motion
 
