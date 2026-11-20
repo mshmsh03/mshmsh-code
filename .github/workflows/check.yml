@@ -1,0 +1,26 @@
+# Runs on every push and pull request, so a broken guard hook, scanner or
+# SKILL.md never reaches friends who install the skill.
+name: Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Every script parses
+        run: |
+          node --check scripts/guard-commands.mjs
+          bash -n scripts/scan.sh
+      - name: SKILL.md and the files the docs name
+        run: node .github/check-skill.mjs
+      - name: Guard hook tests
+        run: node scripts/tests/guard.test.mjs
+      - name: Scanner tests
+        run: bash scripts/tests/scan.test.sh
