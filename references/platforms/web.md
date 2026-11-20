@@ -1,6 +1,6 @@
 # Web: any framework, UI details, accessibility, performance
 
-Read this when building any web UI: content sites, web apps, dashboards, admin tools. SKILL.md has the short version. For visual design quality, also use `impeccable` or `unslop-ui` if installed; this file is about correctness and the small details. Right-to-left layout, Kurdish and Arabic text, digits and locale formatting are in `../concerns/localization-and-rtl.md`.
+Read this when building any web UI: content sites, web apps, dashboards, admin tools. SKILL.md has the short version. The look and the words on screen are in `../concerns/visual-design-and-ux-writing.md`; this file is about correctness and the small details. Right-to-left layout, Kurdish and Arabic text, digits and locale formatting are in `../concerns/localization-and-rtl.md`.
 
 Sections 1-8 and 11-12 hold for every framework. Section 9 is React, section 10 is Next.js, and section 13 covers other frameworks and server-rendered apps.
 

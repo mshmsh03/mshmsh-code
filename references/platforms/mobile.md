@@ -1,6 +1,6 @@
 # Mobile apps: iOS and Android, native, Flutter, React Native/Expo
 
-Read this when building a phone or tablet app in any framework. Offline use, local databases, sync and printers are in `../concerns/offline-first-and-sync.md`; right-to-left layout in `../concerns/localization-and-rtl.md`; signing, store submission and release tracks in `../build/shipping.md` §3; backend services such as Firebase and Supabase in `backend-and-apis.md`.
+Read this when building a phone or tablet app in any framework. Offline use, local databases, sync and printers are in `../concerns/offline-first-and-sync.md`; right-to-left layout in `../concerns/localization-and-rtl.md`; signing, store submission and release tracks in `../build/shipping.md` §3; backend services such as Firebase and Supabase in `backend-and-apis.md`; the look and the words on screen in `../concerns/visual-design-and-ux-writing.md`.
 
 ## Contents
 1. Decide these before the first screen

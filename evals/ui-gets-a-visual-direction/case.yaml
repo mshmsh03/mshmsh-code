@@ -1,0 +1,10 @@
+schema_version: "1.1"
+name: ui-gets-a-visual-direction
+expected_outcome: |
+  Before building the page, the agent proposes 2 or 3 visual directions for the
+  bakery and lets the user pick. Each direction is concrete (named colours or
+  hex values, the typefaces and their roles, and a layout idea) and grows out of
+  the bakery's own world (its bread, kleicha, Sulaymani, its customers) instead
+  of a generic web template. One direction is recommended with a reason. With no
+  question tool available it uses lettered options in text, and it writes no
+  page code before the user has picked.

@@ -45,6 +45,10 @@ Restart Claude Code, then type `/mshmsh-code`, or just describe what you want ("
 
 **Problem-solving.** Clear problems get the standard answer; complicated ones get analysis and options; unknowable ones get a small time-boxed experiment; emergencies get stabilized first. After three failed attempts at one approach it stops and rethinks instead of patching on.
 
+**Design.** Before building screens, it offers 2-3 visual directions drawn from what the product is (colours, type, a layout sketch), builds the one you pick, and checks it against the looks AI-made apps keep landing on. Buttons, errors and empty screens get clear wording.
+
+**Red flags.** A table of the excuses that skip steps ("it's a small change", "it should work", "I know this API"), each with what to do instead.
+
 **Build mode** ("build", "add", "fix", "which stack should I use")
 
 1. **Discovery sized to the task:** two or three lines of approach for a small change; for a project, questions about users, flows, quality needs, constraints and your dev setup, played back for your yes.
@@ -77,7 +81,7 @@ Restart Claude Code, then type `/mshmsh-code`, or just describe what you want ("
 | `references/build/security.md` | Secrets (including keeping them out of the agent's context), auth, access rules, input handling, payments, uploads, rate limits, LLM features, supply chain |
 | `references/build/shipping.md` | Environments, deploys, store and desktop releases, flags, monitoring, migrations, launch checklists |
 | `references/platforms/*.md` | Web, backends and APIs, mobile, desktop, CLIs and automation, data and AI, games/embedded/extensions/libraries |
-| `references/concerns/*.md` | Localization and right-to-left, money and business rules, offline-first and sync |
+| `references/concerns/*.md` | Localization and right-to-left, money and business rules, offline-first and sync, visual design and UX writing |
 | `references/audit/*.md` | The audit workflow and report format, security checks for every stack, quality checks and the launch verdict |
 | `scripts/scan.sh` | The audit's read-only lead finder |
 | `scripts/guard-commands.mjs` | A Claude Code hook that blocks destructive commands and asks before deploys, publishes, infrastructure and database changes, and printing secrets |
@@ -90,7 +94,7 @@ Restart Claude Code, then type `/mshmsh-code`, or just describe what you want ("
 
 - **The guard hook:** `node scripts/tests/guard.test.mjs` runs 242 checks: destructive commands blocked, risky ones asked about, everyday commands left alone, and malformed input failing closed.
 - **The scanner:** `bash scripts/tests/scan.test.sh` builds a throwaway repo with planted issues in JavaScript, Python, C#, Go, Dart, Docker, GitHub Actions, Electron and Firestore rules, then checks all 30 expected results, including that no planted secret is ever printed in full.
-- **The skill itself:** four cases in `evals/`: a new project that must ask and offer stack options, a bug fixed test-first, a database question answered as options, and an audit that must find seven planted issues without changing a file. Run them from this folder with Claude Code: `claude plugin eval . --allow-tools Write,Edit,Bash --scaffold`. In the first run the skill passed 23 of 23 checks and the same model without it 20 of 23; the skill's answers were much longer, which led to the short-by-default rules and stricter checks that followed.
+- **The skill itself:** five cases in `evals/`: a new project that must ask and offer stack options, a bug fixed test-first, a database question answered as options, an audit that must find seven planted issues without changing a file, and a website request that must get 2-3 visual directions before any page code. Run them from this folder with Claude Code: `claude plugin eval . --allow-tools Write,Edit,Bash --scaffold`. In the first run the skill passed 23 of 23 checks and the same model without it 20 of 23; the skill's answers were much longer, which led to the short-by-default rules and stricter checks that followed. In the 2.1.0 run (one run per case, against 2.0.2), 2.1.0 passed 32 of 33 checks and 2.0.2 passed 26 of 33; the biggest gap is the website case, 5 of 5 against 1 of 5 (that case re-run after the last change to the design wording).
 
 GitHub runs both script test suites and a SKILL.md check on every push and pull request.
 
@@ -100,6 +104,10 @@ GitHub runs both script test suites and a SKILL.md check on every push and pull 
 - Claude app: download [mshmsh-code.zip](https://github.com/mshmsh03/mshmsh-code/releases/download/latest/mshmsh-code.zip) again and upload it in place of the old one.
 
 What changed is in [CHANGELOG.md](CHANGELOG.md).
+
+## Credits
+
+Some ideas are adapted, in this skill's own words, from Anthropic's frontend-design skill (a visual direction drawn from the subject, the looks to avoid, interface wording) and Jesse Vincent's [superpowers](https://github.com/obra/superpowers) (red flags for skipped steps).
 
 ## Licence
 
